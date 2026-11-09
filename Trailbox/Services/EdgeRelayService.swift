@@ -45,6 +45,11 @@ final class EdgeRelayService: NSObject, ObservableObject {
         status = "Nearby search stopped"
     }
 
+    func restart() {
+        stop()
+        start()
+    }
+
     func sendSnapshot() {
         guard !session.connectedPeers.isEmpty else { return }
         let beacons = (eventsProvider?() ?? [])
@@ -88,7 +93,10 @@ extension EdgeRelayService: MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBr
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser,
                                 didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?,
                                 invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        Task { @MainActor in invitationHandler(true, session) }
+        Task { @MainActor in
+            status = "Nearby iPhone found · connecting"
+            invitationHandler(true, session)
+        }
     }
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
         Task { @MainActor in status = "Nearby unavailable: \(error.localizedDescription)" }
@@ -96,6 +104,7 @@ extension EdgeRelayService: MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBr
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID,
                              withDiscoveryInfo info: [String: String]?) {
         Task { @MainActor in
+            status = "Nearby iPhone found · connecting"
             if peer.displayName < peerID.displayName {
                 browser.invitePeer(peerID, to: session, withContext: nil, timeout: 15)
             }
@@ -109,6 +118,7 @@ extension EdgeRelayService: MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBr
         Task { @MainActor in
             peerCount = session.connectedPeers.count
             if state == .connected { status = "Connected to nearby iPhone"; sendSnapshot() }
+            if state == .connecting { status = "Connecting to nearby iPhone" }
             if state == .notConnected { status = "Looking for nearby iPhones" }
         }
     }

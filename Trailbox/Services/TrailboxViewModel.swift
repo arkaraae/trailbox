@@ -148,6 +148,7 @@ final class TrailboxViewModel: ObservableObject {
 
     func startRelay() { relay?.start() }
     func stopRelay() { relay?.stop() }
+    func restartRelay() { relay?.restart() }
 
     private func configureRelay() {
         let service = EdgeRelayService(deviceID: deviceID)

@@ -256,6 +256,12 @@ private struct HelpScreen: View {
             }
             Text("\(model.connectedPeers) nearby iPhone(s) connected")
                 .font(.caption).foregroundStyle(.white.opacity(0.55))
+            if model.connectedPeers == 0 {
+                Button("Retry nearby connection") { model.restartRelay() }
+                    .buttonStyle(TrailActionStyle())
+                Text("Keep Trailbox open on both iPhones. Enable Wi-Fi, Bluetooth, and Trailbox under Settings → Privacy & Security → Local Network.")
+                    .font(.caption).foregroundStyle(.white.opacity(0.55))
+            }
         }
         .trailCard()
     }
