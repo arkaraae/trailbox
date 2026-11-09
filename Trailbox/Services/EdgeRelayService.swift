@@ -18,7 +18,7 @@ final class EdgeRelayService: NSObject, ObservableObject {
 
     init(deviceID: String) {
         self.deviceID = deviceID
-        peer = MCPeerID(displayName: String(deviceID.prefix(8)))
+        peer = MCPeerID(displayName: String(UUID().uuidString.prefix(8)))
         session = MCSession(peer: peer, securityIdentity: nil, encryptionPreference: .required)
         super.init()
         session.delegate = self
@@ -131,11 +131,11 @@ extension EdgeRelayService: MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBr
             let beaconIDs = Set(received.compactMap { event -> String? in
                 guard event.type == .sos, event.id.hasPrefix("beacon:"),
                       event.payload["nearby_beacon"] == "true",
-                      UUID(uuidString: event.tripID) != nil else { return nil }
+                      !event.tripID.isEmpty, event.tripID.count <= 80 else { return nil }
                 return event.tripID
             })
             let safe = received.prefix(10).compactMap { event -> TrailEvent? in
-                guard beaconIDs.contains(event.tripID), event.deviceID != deviceID else { return nil }
+                guard beaconIDs.contains(event.tripID) else { return nil }
                 if event.type == .sos && event.id.hasPrefix("beacon:") {
                     return TrailEvent(id: event.id, tripID: event.tripID, deviceID: event.deviceID,
                                       type: .sos, recordedAt: event.recordedAt,

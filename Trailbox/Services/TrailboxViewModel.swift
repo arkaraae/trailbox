@@ -93,11 +93,11 @@ final class TrailboxViewModel: ObservableObject {
         events.filter { $0.type == .injuryVoice && $0.deviceID == deviceID && $0.payload["pairing"] == "pending" }
     }
     var nearbyIncidents: [TrailEvent] {
-        events.filter { $0.tripID == activeIncidentID && $0.type == .sos && $0.deviceID != deviceID }
+        events.filter { $0.tripID == activeIncidentID && $0.type == .sos && $0.payload["nearby_beacon"] == "true" }
     }
     var nearbyReport: TrailEvent? {
         events.last(where: { $0.tripID == activeIncidentID && $0.type == .agentNote &&
-            $0.deviceID != deviceID && $0.payload["nearby_report"] == "true" })
+            $0.payload["nearby_report"] == "true" })
     }
 
     init() {
@@ -162,7 +162,7 @@ final class TrailboxViewModel: ObservableObject {
             do {
                 try store.merge(incoming)
                 self.events = try store.allEvents()
-                if let newest = incoming.last(where: { $0.type == .sos && $0.deviceID != self.deviceID }) {
+                if let newest = incoming.last(where: { $0.type == .sos && $0.payload["nearby_beacon"] == "true" }) {
                     self.activeIncidentID = newest.tripID
                     self.guardianReport = ""
                     self.guardianReportStatus = "Not checked"
