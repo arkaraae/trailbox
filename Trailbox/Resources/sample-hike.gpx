@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Trailbox indoor demo" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Trailbox Sample Hike (Demo Only)</name></metadata>
+  <trk><name>Sample Hill Loop</name><trkseg>
+    <trkpt lat="37.33310" lon="-122.08000"><ele>160</ele><time>2026-11-08T09:00:00Z</time></trkpt>
+    <trkpt lat="37.33510" lon="-122.08120"><ele>182</ele><time>2026-11-08T09:05:00Z</time></trkpt>
+    <trkpt lat="37.33740" lon="-122.08330"><ele>225</ele><time>2026-11-08T09:10:00Z</time></trkpt>
+    <trkpt lat="37.33920" lon="-122.08530"><ele>263</ele><time>2026-11-08T09:15:00Z</time></trkpt>
+    <trkpt lat="37.34100" lon="-122.08710"><ele>295</ele><time>2026-11-08T09:20:00Z</time></trkpt>
+    <trkpt lat="37.33900" lon="-122.08860"><ele>278</ele><time>2026-11-08T09:25:00Z</time></trkpt>
+    <trkpt lat="37.33550" lon="-122.08540"><ele>213</ele><time>2026-11-08T09:30:00Z</time></trkpt>
+    <trkpt lat="37.33310" lon="-122.08000"><ele>160</ele><time>2026-11-08T09:35:00Z</time></trkpt>
+  </trkseg></trk>
+</gpx>

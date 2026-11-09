@@ -1,0 +1,57 @@
+name: Trailbox
+options:
+  bundleIdPrefix: com.example
+settings:
+  base:
+    SWIFT_VERSION: 5.0
+    IPHONEOS_DEPLOYMENT_TARGET: '18.0'
+targets:
+  Trailbox:
+    type: application
+    platform: iOS
+    sources:
+      - path: Trailbox
+        excludes:
+          - Resources/sample-hike.gpx
+      - path: Trailbox/Resources/sample-hike.gpx
+        buildPhase: resources
+    dependencies:
+      - framework: Vendor/llama.xcframework
+        embed: true
+    info:
+      path: Trailbox/Info.plist
+      properties:
+        NSBonjourServices:
+          - _trailbox-sync._tcp
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        NSLocalNetworkUsageDescription: Trailbox finds nearby iPhones to relay your trip events.
+        NSLocationWhenInUseUsageDescription: Trailbox records your position in a local emergency record when you request it.
+    settings:
+      configs:
+        Debug:
+          ENABLE_TESTABILITY: YES
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.trailbox
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Trailbox
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: Trailbox finds nearby iPhones to relay your trip events.
+        INFOPLIST_KEY_NSBonjourServices: '["_trailbox-sync._tcp"]'
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: Trailbox records your position in a local emergency record when you request it.
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        TARGETED_DEVICE_FAMILY: '1'
+        OTHER_LDFLAGS: '$(inherited) -lsqlite3'
+  TrailboxTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: TrailboxTests
+    dependencies:
+      - target: Trailbox
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.trailbox.tests
+        TEST_HOST: '$(BUILT_PRODUCTS_DIR)/Trailbox.app/Trailbox'
+        BUNDLE_LOADER: '$(TEST_HOST)'

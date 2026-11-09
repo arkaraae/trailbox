@@ -1,0 +1,1 @@
+{"build":{"builder":"NIXPACKS"},"deploy":{"startCommand":"python3 GuardianServer/guardian.py","healthcheckPath":null,"restartPolicyType":"ON_FAILURE"}}

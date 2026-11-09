@@ -1,0 +1,559 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2C10FFF27B9CDF5EB323F467 /* TrailSecurity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84AFD02CE9F56DD901A5B6B1 /* TrailSecurity.swift */; };
+		409A7590B16C1742866690EF /* llama.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 16D6F15C0B71C5E1523855B1 /* llama.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5213D9C58ACFBE2E332688F0 /* EdgeRelayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2AC87F18CF5A9B52A292BB /* EdgeRelayService.swift */; };
+		6B9038EC30C113AC5FF033BC /* GPXTrack.swift in Sources */ = {isa = PBXBuildFile; fileRef = A80A41C93F561F208CEF4345 /* GPXTrack.swift */; };
+		7016936694DFFF5A544E3038 /* llama.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 16D6F15C0B71C5E1523855B1 /* llama.xcframework */; };
+		7A999DBD8B8C55D277A7B553 /* EmergencyLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8657EC52A9B163BCFE676AC /* EmergencyLocation.swift */; };
+		8088CE69ACB847CDF18F7945 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E089BB9279DFA645076C586 /* ContentView.swift */; };
+		81CEE534282B0EE71D4400E5 /* LiquidTrailAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA17B4CB9A82CBDECE6ADA5 /* LiquidTrailAgent.swift */; };
+		875C116D92021A7645900487 /* CloudGuardianClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C832AD601FC0DBCE88C12AD1 /* CloudGuardianClient.swift */; };
+		9659D40D8ACDE8F4D6500A40 /* TrailboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4B5AD53A180131CAF049951 /* TrailboxTests.swift */; };
+		AA54F2D0ABF5450E9B9100D9 /* TrailboxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46E65CC387CD074D4D26631 /* TrailboxApp.swift */; };
+		BDA61802B849F9E63DA6747A /* EmergencyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26156098F200F2BB45A56FA3 /* EmergencyView.swift */; };
+		C0DD3179D39508784083C621 /* TripStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE1302740ECA853D6BEEBE94 /* TripStatusCard.swift */; };
+		C1BA7DD39C087C2D685AC6F8 /* SafetyRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F12788C3BD8DA98BE6CF520F /* SafetyRulesTests.swift */; };
+		C35C11A12909DAC8F50389C0 /* SafetyRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02BCC61CF1A27F3DCEE62617 /* SafetyRules.swift */; };
+		C36BC155EA353EB64F0556FE /* TrailEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA6CECE48851DCF800F2EDD /* TrailEvent.swift */; };
+		C4FF8232C7D6D827AB098C04 /* TrailboxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42D9F45B73C0DE3F1C315ED /* TrailboxViewModel.swift */; };
+		CEAED37B2BC2AC39EBD01F53 /* TripPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65D5F746BA2C122C81069BF6 /* TripPlanView.swift */; };
+		D04DD65184D0C08AC9256E1C /* sample-hike.gpx in Resources */ = {isa = PBXBuildFile; fileRef = 4CEA11A0629262B202B378D1 /* sample-hike.gpx */; };
+		E0081998A2F49C5F426A38E8 /* EventStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E34377573F80798431F8659 /* EventStore.swift */; };
+		E843A8DDF8F082AF77A814F2 /* ConnectivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AAB8D8E3185CA3061A98025 /* ConnectivityView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8CBD84AC87CCB04F31E1CA99 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DA9F80D32A308EF5E54DC7CF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F61A32D059C635CE802E5E74;
+			remoteInfo = Trailbox;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5CA28FE027BEF31E83FF5193 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				409A7590B16C1742866690EF /* llama.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		02BCC61CF1A27F3DCEE62617 /* SafetyRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyRules.swift; sourceTree = "<group>"; };
+		09E8357A5B4C27E039BE2CAE /* Trailbox.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Trailbox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0E34377573F80798431F8659 /* EventStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStore.swift; sourceTree = "<group>"; };
+		16D6F15C0B71C5E1523855B1 /* llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = llama.xcframework; path = Vendor/llama.xcframework; sourceTree = "<group>"; };
+		1E089BB9279DFA645076C586 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		26156098F200F2BB45A56FA3 /* EmergencyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyView.swift; sourceTree = "<group>"; };
+		3AAB8D8E3185CA3061A98025 /* ConnectivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectivityView.swift; sourceTree = "<group>"; };
+		4CEA11A0629262B202B378D1 /* sample-hike.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "sample-hike.gpx"; sourceTree = "<group>"; };
+		65D5F746BA2C122C81069BF6 /* TripPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanView.swift; sourceTree = "<group>"; };
+		6BA17B4CB9A82CBDECE6ADA5 /* LiquidTrailAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidTrailAgent.swift; sourceTree = "<group>"; };
+		84AFD02CE9F56DD901A5B6B1 /* TrailSecurity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailSecurity.swift; sourceTree = "<group>"; };
+		A80A41C93F561F208CEF4345 /* GPXTrack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXTrack.swift; sourceTree = "<group>"; };
+		B46E65CC387CD074D4D26631 /* TrailboxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailboxApp.swift; sourceTree = "<group>"; };
+		BB2AC87F18CF5A9B52A292BB /* EdgeRelayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeRelayService.swift; sourceTree = "<group>"; };
+		C832AD601FC0DBCE88C12AD1 /* CloudGuardianClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudGuardianClient.swift; sourceTree = "<group>"; };
+		D1A5849E4CF1CE407C4FBC5C /* TrailboxTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TrailboxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D42D9F45B73C0DE3F1C315ED /* TrailboxViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailboxViewModel.swift; sourceTree = "<group>"; };
+		D4B5AD53A180131CAF049951 /* TrailboxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailboxTests.swift; sourceTree = "<group>"; };
+		D8657EC52A9B163BCFE676AC /* EmergencyLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyLocation.swift; sourceTree = "<group>"; };
+		DE1302740ECA853D6BEEBE94 /* TripStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripStatusCard.swift; sourceTree = "<group>"; };
+		EEA6CECE48851DCF800F2EDD /* TrailEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailEvent.swift; sourceTree = "<group>"; };
+		F12788C3BD8DA98BE6CF520F /* SafetyRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyRulesTests.swift; sourceTree = "<group>"; };
+		F9753D60073E7CB2B667D544 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		20D8E175B484F5C8B6E49181 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7016936694DFFF5A544E3038 /* llama.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		06570B4A3B6EC858CFFD970B /* TrailboxTests */ = {
+			isa = PBXGroup;
+			children = (
+				F12788C3BD8DA98BE6CF520F /* SafetyRulesTests.swift */,
+				D4B5AD53A180131CAF049951 /* TrailboxTests.swift */,
+			);
+			path = TrailboxTests;
+			sourceTree = "<group>";
+		};
+		08194E810E13523D11A4A9C9 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				3AAB8D8E3185CA3061A98025 /* ConnectivityView.swift */,
+				1E089BB9279DFA645076C586 /* ContentView.swift */,
+				26156098F200F2BB45A56FA3 /* EmergencyView.swift */,
+				65D5F746BA2C122C81069BF6 /* TripPlanView.swift */,
+				DE1302740ECA853D6BEEBE94 /* TripStatusCard.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		0CDF598A1CFFEDD5462B6D36 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				C832AD601FC0DBCE88C12AD1 /* CloudGuardianClient.swift */,
+				BB2AC87F18CF5A9B52A292BB /* EdgeRelayService.swift */,
+				D8657EC52A9B163BCFE676AC /* EmergencyLocation.swift */,
+				0E34377573F80798431F8659 /* EventStore.swift */,
+				6BA17B4CB9A82CBDECE6ADA5 /* LiquidTrailAgent.swift */,
+				02BCC61CF1A27F3DCEE62617 /* SafetyRules.swift */,
+				D42D9F45B73C0DE3F1C315ED /* TrailboxViewModel.swift */,
+				84AFD02CE9F56DD901A5B6B1 /* TrailSecurity.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		3AF68851A6B8FD142318941D /* Trailbox */ = {
+			isa = PBXGroup;
+			children = (
+				F9753D60073E7CB2B667D544 /* Info.plist */,
+				B46E65CC387CD074D4D26631 /* TrailboxApp.swift */,
+				66127D63025E1ED131ED5A21 /* Models */,
+				0CDF598A1CFFEDD5462B6D36 /* Services */,
+				08194E810E13523D11A4A9C9 /* Views */,
+			);
+			path = Trailbox;
+			sourceTree = "<group>";
+		};
+		66127D63025E1ED131ED5A21 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A80A41C93F561F208CEF4345 /* GPXTrack.swift */,
+				EEA6CECE48851DCF800F2EDD /* TrailEvent.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		8F349DC87850BD3074986959 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				16D6F15C0B71C5E1523855B1 /* llama.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		B3CD162BB59AFDEC69F74514 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				4CEA11A0629262B202B378D1 /* sample-hike.gpx */,
+			);
+			name = Resources;
+			path = Trailbox/Resources;
+			sourceTree = "<group>";
+		};
+		D11A62A2EF94A49CBCEC96F2 = {
+			isa = PBXGroup;
+			children = (
+				B3CD162BB59AFDEC69F74514 /* Resources */,
+				3AF68851A6B8FD142318941D /* Trailbox */,
+				06570B4A3B6EC858CFFD970B /* TrailboxTests */,
+				8F349DC87850BD3074986959 /* Frameworks */,
+				DEE98708D4EA442217F9C24B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DEE98708D4EA442217F9C24B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				09E8357A5B4C27E039BE2CAE /* Trailbox.app */,
+				D1A5849E4CF1CE407C4FBC5C /* TrailboxTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C4AE117838BC6E1FA8AD6490 /* TrailboxTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 763E5AFF564B6EC61DA1F5F1 /* Build configuration list for PBXNativeTarget "TrailboxTests" */;
+			buildPhases = (
+				10CDB55D5030F738956BF73D /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EFBA105B8620D868ED409B15 /* PBXTargetDependency */,
+			);
+			name = TrailboxTests;
+			packageProductDependencies = (
+			);
+			productName = TrailboxTests;
+			productReference = D1A5849E4CF1CE407C4FBC5C /* TrailboxTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		F61A32D059C635CE802E5E74 /* Trailbox */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0D57C86B478E17BDF7AE410F /* Build configuration list for PBXNativeTarget "Trailbox" */;
+			buildPhases = (
+				30487C2D2FE45AB394A29B82 /* Sources */,
+				5E13A592897CC26487CB51A5 /* Resources */,
+				20D8E175B484F5C8B6E49181 /* Frameworks */,
+				5CA28FE027BEF31E83FF5193 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Trailbox;
+			packageProductDependencies = (
+			);
+			productName = Trailbox;
+			productReference = 09E8357A5B4C27E039BE2CAE /* Trailbox.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DA9F80D32A308EF5E54DC7CF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 24F8BB9A43163503835B09AB /* Build configuration list for PBXProject "Trailbox" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D11A62A2EF94A49CBCEC96F2;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = DEE98708D4EA442217F9C24B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F61A32D059C635CE802E5E74 /* Trailbox */,
+				C4AE117838BC6E1FA8AD6490 /* TrailboxTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5E13A592897CC26487CB51A5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D04DD65184D0C08AC9256E1C /* sample-hike.gpx in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		10CDB55D5030F738956BF73D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1BA7DD39C087C2D685AC6F8 /* SafetyRulesTests.swift in Sources */,
+				9659D40D8ACDE8F4D6500A40 /* TrailboxTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		30487C2D2FE45AB394A29B82 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				875C116D92021A7645900487 /* CloudGuardianClient.swift in Sources */,
+				E843A8DDF8F082AF77A814F2 /* ConnectivityView.swift in Sources */,
+				8088CE69ACB847CDF18F7945 /* ContentView.swift in Sources */,
+				5213D9C58ACFBE2E332688F0 /* EdgeRelayService.swift in Sources */,
+				7A999DBD8B8C55D277A7B553 /* EmergencyLocation.swift in Sources */,
+				BDA61802B849F9E63DA6747A /* EmergencyView.swift in Sources */,
+				E0081998A2F49C5F426A38E8 /* EventStore.swift in Sources */,
+				6B9038EC30C113AC5FF033BC /* GPXTrack.swift in Sources */,
+				81CEE534282B0EE71D4400E5 /* LiquidTrailAgent.swift in Sources */,
+				C35C11A12909DAC8F50389C0 /* SafetyRules.swift in Sources */,
+				C36BC155EA353EB64F0556FE /* TrailEvent.swift in Sources */,
+				2C10FFF27B9CDF5EB323F467 /* TrailSecurity.swift in Sources */,
+				AA54F2D0ABF5450E9B9100D9 /* TrailboxApp.swift in Sources */,
+				C4FF8232C7D6D827AB098C04 /* TrailboxViewModel.swift in Sources */,
+				CEAED37B2BC2AC39EBD01F53 /* TripPlanView.swift in Sources */,
+				C0DD3179D39508784083C621 /* TripStatusCard.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		EFBA105B8620D868ED409B15 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F61A32D059C635CE802E5E74 /* Trailbox */;
+			targetProxy = 8CBD84AC87CCB04F31E1CA99 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0FE6D5E08C17B88B21F26AE6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		485F5D456EEBC0E1D2F995D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		643E0E5FFD5AD6ED561A02E2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"Vendor\"",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Trailbox/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Trailbox;
+				INFOPLIST_KEY_NSBonjourServices = "[\"_trailbox-sync._tcp\"]";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Trailbox finds nearby iPhones to relay your trip events.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Trailbox records your position in a local emergency record when you request it.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = "$(inherited) -lsqlite3";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.trailbox;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		7BB540DD9654D35C949D570F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.trailbox.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Trailbox.app/Trailbox";
+			};
+			name = Release;
+		};
+		ED65BACAB8960DABEE745C7E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.trailbox.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Trailbox.app/Trailbox";
+			};
+			name = Debug;
+		};
+		F39A533027A6C759778E3ECB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"Vendor\"",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Trailbox/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Trailbox;
+				INFOPLIST_KEY_NSBonjourServices = "[\"_trailbox-sync._tcp\"]";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Trailbox finds nearby iPhones to relay your trip events.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Trailbox records your position in a local emergency record when you request it.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = "$(inherited) -lsqlite3";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.trailbox;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0D57C86B478E17BDF7AE410F /* Build configuration list for PBXNativeTarget "Trailbox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F39A533027A6C759778E3ECB /* Debug */,
+				643E0E5FFD5AD6ED561A02E2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		24F8BB9A43163503835B09AB /* Build configuration list for PBXProject "Trailbox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0FE6D5E08C17B88B21F26AE6 /* Debug */,
+				485F5D456EEBC0E1D2F995D2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		763E5AFF564B6EC61DA1F5F1 /* Build configuration list for PBXNativeTarget "TrailboxTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ED65BACAB8960DABEE745C7E /* Debug */,
+				7BB540DD9654D35C949D570F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DA9F80D32A308EF5E54DC7CF /* Project object */;
+}
