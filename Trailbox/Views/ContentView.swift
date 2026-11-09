@@ -2,453 +2,440 @@ import SwiftUI
 import MapKit
 import UniformTypeIdentifiers
 
+private enum TrailColors {
+    static let background = Color(red: 0.07, green: 0.085, blue: 0.08)
+    static let card = Color(red: 0.14, green: 0.16, blue: 0.15)
+    static let green = Color(red: 0.58, green: 0.92, blue: 0.43)
+    static let orange = Color(red: 1, green: 0.67, blue: 0.32)
+}
+
 struct ContentView: View {
     @EnvironmentObject private var model: TrailboxViewModel
-    @State private var showEvents = false
-    @State private var showEmergency = false
-    @State private var showTripPlan = false
-    @State private var showConnectivity = false
-    @State private var showGPXImporter = false
-    @State private var voiceIncident: TrailEvent?
-    @StateObject private var agent = LiquidTrailAgent()
 
     var body: some View {
-        ZStack {
-            Color(red: 0.08, green: 0.09, blue: 0.09).ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    header
-                    statusStrip
-                    safetyQuickAction
-                    TripStatusCard(model: model)
-                    tripPlanCard
-                    connectionCard
-                    liveTrailCard
-                    nearbyIncidentCard
-                    emergencyCard
-                    mapCard
-                    replayCard
-                    simulatorCard
-                    eventCard
-                    safetyNote
-                }
-                .padding(18)
-            }
+        TabView {
+            HikeScreen()
+                .tabItem { Label("Hike", systemImage: "figure.hiking") }
+            HelpScreen()
+                .tabItem { Label("Nearby", systemImage: "person.2.wave.2") }
+            ReportScreen()
+                .tabItem { Label("Report", systemImage: "doc.text") }
         }
+        .tint(TrailColors.green)
         .preferredColorScheme(.dark)
-        .sheet(isPresented: $showEvents) { eventSheet }
-        .sheet(isPresented: $showEmergency) { EmergencyView(agent: agent).environmentObject(model) }
-        .sheet(isPresented: $showTripPlan) { TripPlanView().environmentObject(model) }
-        .sheet(isPresented: $showConnectivity) { ConnectivityView().environmentObject(model) }
-        .sheet(item: $voiceIncident) { HelperVoiceView(incident: $0).environmentObject(model) }
         .sheet(isPresented: Binding(get: { model.checkInReason != nil }, set: { _ in })) {
             CheckInView().environmentObject(model).interactiveDismissDisabled()
         }
-        .fileImporter(isPresented: $showGPXImporter, allowedContentTypes: [.data]) { result in
-            if case .success(let url) = result { model.importRoute(url) }
-        }
-        .alert("Trailbox error", isPresented: Binding(
+        .alert("Trailbox", isPresented: Binding(
             get: { model.errorMessage != nil },
             set: { if !$0 { model.dismissError() } })) {
                 Button("OK", role: .cancel) { model.dismissError() }
-            } message: {
-                Text(model.errorMessage ?? "Unknown error")
-            }
+            } message: { Text(model.errorMessage ?? "Unknown error") }
     }
+}
 
-    private var header: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Image(systemName: "mountain.2.fill").foregroundStyle(.mint)
-                    Text("TRAILBOX").font(.system(size: 28, weight: .black, design: .rounded))
-                        .tracking(1.5)
+private struct HikeScreen: View {
+    @EnvironmentObject private var model: TrailboxViewModel
+    @StateObject private var agent = LiquidTrailAgent()
+    @State private var showPlan = false
+    @State private var showEmergency = false
+    @State private var showImporter = false
+    @State private var showControls = false
+
+    var body: some View {
+        ZStack {
+            routeMap
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Route replay")
+                        .font(.title3.bold())
+                    Spacer()
+                    Button("Plan") { showPlan = true }
+                    Button("GPX") { showImporter = true }
                 }
-                Text("YOUR HIKE. YOUR BLACK BOX.")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .tracking(1.8).foregroundStyle(.white.opacity(0.55))
-            }
-            Spacer()
-            Label(model.isLiveTracking ? "LIVE" : "DEMO", systemImage: model.isLiveTracking ? "location.fill" : "play.rectangle.fill")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .padding(.horizontal, 12).padding(.vertical, 8)
-                .foregroundStyle(.mint)
-                .background(.mint.opacity(0.13), in: Capsule())
-        }
-        .accessibilityIdentifier("trailbox.header")
-    }
-
-    private var statusStrip: some View {
-        HStack(spacing: 8) {
-            tier("ON-DEVICE", color: .mint, active: true)
-            tier("EDGE", color: .orange, active: model.edgeConnected)
-            tier("CLOUD", color: .cyan, active: model.cloudStatus.hasPrefix("Synced"))
-            Spacer(minLength: 2)
-            Image(systemName: model.forcedOffline ? "wifi.slash" : "wifi")
-                .foregroundStyle(model.forcedOffline ? .orange : .mint)
-            Text("\(model.pendingCount) PENDING")
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-        }
-    }
-
-    private func tier(_ name: String, color: Color, active: Bool) -> some View {
-        HStack(spacing: 4) {
-            Circle().fill(active ? color : Color.gray).frame(width: 5, height: 5)
-            Text(name).font(.system(size: 9, weight: .bold, design: .monospaced))
-        }
-        .foregroundStyle(active ? color : .white.opacity(0.4))
-        .padding(.horizontal, 8).padding(.vertical, 7)
-        .background(Color.white.opacity(0.065), in: Capsule())
-    }
-
-    private var mapCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label("ROUTE REPLAY", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.75))
+                .padding(12)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+                .padding(.horizontal, 14).padding(.top, 8)
                 Spacer()
-                Text("\(model.pointIndex + (model.points.isEmpty ? 0 : 1))/\(model.points.count) WAYPOINTS")
-                    .font(.system(size: 10, design: .monospaced)).foregroundStyle(.mint)
+                replayPanel
             }
-            Map(position: $model.cameraPosition) {
-                if model.route.count >= 2 {
-                    MapPolyline(coordinates: model.route)
-                        .stroke(.mint.opacity(0.85), style: StrokeStyle(lineWidth: 5, lineCap: .round))
+        }
+        .background(TrailColors.background)
+        .sheet(isPresented: $showPlan) { TripPlanView().environmentObject(model) }
+        .sheet(isPresented: $showEmergency) { EmergencyView(agent: agent).environmentObject(model) }
+        .sheet(isPresented: $showControls) {
+            NavigationStack {
+                ScrollView {
+                    VStack(spacing: 16) { hikeControls; demoControls }
+                        .padding(16)
                 }
-                if let live = model.liveCoordinate, model.isLiveTracking {
-                    Annotation("Live hiker", coordinate: live) {
-                        Image(systemName: "location.fill")
-                            .foregroundStyle(.black).padding(9).background(.yellow, in: Circle())
-                    }
-                }
-                if let signal = model.lastSignalCoordinate {
-                    Annotation("Last signal", coordinate: signal) {
-                        Image(systemName: "antenna.radiowaves.left.and.right")
-                            .foregroundStyle(.white).padding(8).background(.blue, in: Circle())
-                    }
-                }
-                if let current = model.currentPoint {
-                    Annotation("Hiker", coordinate: current.coordinate) {
-                        Image(systemName: "figure.hiking")
-                            .font(.system(size: 17, weight: .bold))
-                            .foregroundStyle(.black)
-                            .padding(10)
-                            .background(.mint, in: Circle())
-                            .overlay(Circle().stroke(.white, lineWidth: 3))
-                            .shadow(radius: 5)
-                    }
-                }
+                .background(TrailColors.background)
+                .navigationTitle("Hike controls")
+                .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { showControls = false } } }
             }
-            .mapStyle(.standard(elevation: .realistic))
-            .frame(height: 290)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .accessibilityIdentifier("trailbox.map")
+            .presentationDetents([.medium, .large])
+        }
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data]) { result in
+            if case .success(let url) = result { model.importRoute(url) }
+        }
+    }
+
+    private var replayPanel: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack {
+                Text(model.importedRouteName ?? "Demo route")
+                    .font(.headline).lineLimit(1)
+                Spacer()
+                Text("\(model.pointIndex + 1)/\(model.points.count)")
+                    .font(.system(.caption, design: .monospaced))
+                Text("\(Int(model.elapsedSeconds / 60))m")
+                    .font(.system(.caption, design: .monospaced))
+            }
             HStack(spacing: 8) {
-                Image(systemName: "location.fill").foregroundStyle(.mint)
-                Text(coordinateLabel).font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.8))
-                Spacer()
-                Text(model.lastSignalDistanceMeters.map { "SIGNAL \($0) M BACK" } ?? "GPX • INDOOR MODE")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.45))
-            }
-        }
-        .cardStyle()
-    }
-
-    private var coordinateLabel: String {
-        guard let point = model.currentPoint else { return "No GPS replay data" }
-        return String(format: "%.5f, %.5f", point.latitude, point.longitude)
-    }
-
-    private var replayCard: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            HStack {
-                Text("SIMULATED HIKE").font(.system(size: 11, weight: .bold, design: .monospaced))
-                Spacer()
-                Text(model.simulatedTime, format: .dateTime.hour().minute())
-                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.mint)
-            }
-            HStack(alignment: .firstTextBaseline) {
-                Text(durationLabel)
-                    .font(.system(size: 36, weight: .black, design: .rounded))
-                    .monospacedDigit()
-                Text("SIM ELAPSED").font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.4))
-                Spacer()
-                Text(model.isPlaying ? "● RECORDING" : "● PAUSED")
-                    .foregroundStyle(model.isPlaying ? .mint : .orange)
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-            }
-            ProgressView(value: Double(model.pointIndex), total: Double(max(1, model.points.count - 1)))
-                .tint(.mint)
-            HStack(spacing: 10) {
-                Button {
+                Button(model.isPlaying ? "Pause" : "Play route") {
                     model.startOrPause()
-                } label: {
-                    Label(model.isPlaying ? "Pause" : "Start Hike", systemImage: model.isPlaying ? "pause.fill" : "play.fill")
-                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(TrailButtonStyle(prominent: true))
-                .disabled(model.isFinished || !model.hasTripPlan)
-                .accessibilityIdentifier("trailbox.startPause")
-
-                Button { model.nextPoint() } label: {
-                    Image(systemName: "forward.end.fill").frame(width: 48)
+                .buttonStyle(.borderedProminent).tint(TrailColors.green)
+                Button { model.nextPoint() } label: { Image(systemName: "forward.end.fill") }
+                    .buttonStyle(.bordered)
+                Button { model.resetReplay() } label: { Image(systemName: "arrow.counterclockwise") }
+                    .buttonStyle(.bordered)
+                Menu("\(model.speed)×") {
+                    Button("1×") { model.speed = 1 }
+                    Button("10×") { model.speed = 10 }
+                    Button("60×") { model.speed = 60 }
                 }
-                .buttonStyle(TrailButtonStyle(prominent: false))
-                .disabled(model.isFinished)
-                .accessibilityLabel("Next waypoint")
-                .accessibilityIdentifier("trailbox.nextPoint")
-
-                Button { model.resetReplay() } label: {
-                    Image(systemName: "arrow.counterclockwise").frame(width: 48)
-                }
-                .buttonStyle(TrailButtonStyle(prominent: false))
-                .accessibilityLabel("Reset replay")
+                .buttonStyle(.bordered)
             }
-            HStack {
-                Text("REPLAY SPEED").font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.6))
-                Spacer()
-                Picker("Replay speed", selection: $model.speed) {
-                    Text("1×").tag(1)
-                    Text("10×").tag(10)
-                    Text("60×").tag(60)
+            HStack(spacing: 8) {
+                Button(model.isLiveTracking ? "Stop hike" : "Start hike") {
+                    if model.hasTripPlan {
+                        model.isLiveTracking ? model.stopLive() : model.startLive()
+                    } else { showPlan = true }
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 190)
+                .buttonStyle(.borderedProminent).tint(TrailColors.green)
+                Button("SOS") { showEmergency = true }
+                    .buttonStyle(.borderedProminent).tint(.red)
+                Button("Demo") { showControls = true }
+                    .buttonStyle(.bordered)
             }
+            if model.reportSOS != nil { Text("Nearby help alert active").font(.caption).foregroundStyle(TrailColors.orange) }
         }
-        .cardStyle()
+        .padding(14)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .padding(.horizontal, 12).padding(.bottom, 8)
     }
 
-    private var durationLabel: String {
-        let total = Int(model.elapsedSeconds)
-        return String(format: "%02d:%02d", total / 60, total % 60)
-    }
-
-    private var simulatorCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
+    private var hikeControls: some View {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label("SCENARIO CONTROLS", systemImage: "slider.horizontal.3")
+                Label("Your hike", systemImage: "map")
+                    .font(.system(size: 14, weight: .bold))
+                Spacer()
+                Text(model.hasTripPlan ? "PLAN SAVED" : "SETUP NEEDED")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundStyle(model.hasTripPlan ? TrailColors.green : TrailColors.orange)
+            }
+            if model.hasTripPlan {
+                Text("\(model.groupName) · Return \(model.expectedReturn.formatted(date: .omitted, time: .shortened))")
+                    .font(.subheadline).foregroundStyle(.white.opacity(0.72))
+            } else {
+                Text("Add a return time and emergency contact to start.")
+                    .font(.subheadline).foregroundStyle(.white.opacity(0.72))
+            }
+            Button(model.hasTripPlan ? "Edit trip plan" : "Set up hike") { showPlan = true }
+                .buttonStyle(TrailActionStyle())
+            Button(model.isLiveTracking ? "Stop hike" : "Start hike") {
+                if model.hasTripPlan {
+                    model.isLiveTracking ? model.stopLive() : model.startLive()
+                } else { showPlan = true }
+            }
+            .buttonStyle(TrailActionStyle(primary: true))
+            .accessibilityIdentifier("trailbox.startHike")
+            Text(model.liveStatus)
+                .font(.caption).foregroundStyle(.white.opacity(0.53))
+        }
+        .trailCard()
+    }
+
+    private var demoControls: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack {
+                Text("TRY A CHECK-IN")
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                 Spacer()
-                Text("LOCAL ONLY").font(.system(size: 9, weight: .bold)).foregroundStyle(.orange)
+                Text("INDOORS").font(.system(size: 9, weight: .bold)).foregroundStyle(TrailColors.orange)
             }
-            Toggle("Force simulated offline", isOn: $model.forcedOffline).tint(.mint)
-            Divider().overlay(.white.opacity(0.1))
-            Toggle("Fake barometer drop", isOn: $model.fakeStorm).tint(.orange)
-                .onChange(of: model.fakeStorm) { _, _ in model.evaluateDemoSafety() }
-            Divider().overlay(.white.opacity(0.1))
-            Toggle("Fake low battery", isOn: $model.fakeLowBattery).tint(.orange)
-                .onChange(of: model.fakeLowBattery) { _, _ in model.evaluateDemoSafety() }
-            Divider().overlay(.white.opacity(0.1))
-            HStack {
-                Text("Heart rate")
-                Spacer()
-                Text("\(Int(model.heartRate)) BPM").foregroundStyle(.mint).monospacedDigit()
+            Text("Start the hike, then choose one trigger. The same rule opens the check-in used on trail.")
+                .font(.caption).foregroundStyle(.white.opacity(0.62))
+            HStack(spacing: 8) {
+                demoButton("Fall", icon: "figure.fall") { model.simulateFallCheckIn() }
+                demoButton("Off trail", icon: "point.topleft.down.curvedto.point.bottomright.up") { model.simulateOffRouteCheckIn() }
+                demoButton("Still", icon: "figure.stand") { model.simulateStillnessCheckIn() }
             }
-            Slider(value: $model.heartRate, in: 45...180, step: 1).tint(.mint)
-            Button { model.logVitals() } label: {
-                Label("Log simulated vitals", systemImage: "waveform.path.ecg")
-                    .frame(maxWidth: .infinity)
+            .disabled(!model.isLiveTracking)
+            Button { showEmergency = true } label: {
+                Label("Record SOS now", systemImage: "sos.circle.fill").frame(maxWidth: .infinity)
             }
-            .buttonStyle(TrailButtonStyle(prominent: false))
-            Text("Scenario toggles affect deterministic demo alerts.")
-                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.48))
+            .buttonStyle(TrailActionStyle(danger: true))
+            if model.activeIncidentID == model.tripID, model.reportSOS != nil {
+                Text("Nearby help alert active")
+                    .font(.caption.bold()).foregroundStyle(TrailColors.orange)
+            }
         }
-        .cardStyle()
+        .trailCard()
+    }
+
+    private func demoButton(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                Image(systemName: icon).font(.system(size: 17))
+                Text(title).font(.system(size: 11, weight: .semibold))
+            }
+            .frame(maxWidth: .infinity).frame(height: 56)
+        }
+        .buttonStyle(TrailActionStyle())
+    }
+
+    private var routeMap: some View {
+        Map(position: $model.cameraPosition) {
+            if model.route.count > 1 {
+                MapPolyline(coordinates: model.route).stroke(TrailColors.green, lineWidth: 5)
+            }
+            if let location = model.liveCoordinate, model.isLiveTracking {
+                Annotation("You", coordinate: location) {
+                    Image(systemName: "location.fill")
+                        .foregroundStyle(.black).padding(10).background(TrailColors.green, in: Circle())
+                }
+            } else if let point = model.currentPoint {
+                Annotation("Replay", coordinate: point.coordinate) {
+                    Image(systemName: "figure.hiking")
+                        .foregroundStyle(.black).padding(10).background(TrailColors.green, in: Circle())
+                }
+            }
+        }
+        .mapStyle(.standard(elevation: .realistic))
+        .ignoresSafeArea(edges: .top)
+        .accessibilityIdentifier("trailbox.map")
+    }
+
+}
+
+private struct HelpScreen: View {
+    @EnvironmentObject private var model: TrailboxViewModel
+    @StateObject private var voicePlayer = OfflineVoicePlayer()
+    @State private var showOfflineNote = false
+    @State private var voiceIncident: TrailEvent?
+
+    var body: some View {
+        ZStack {
+            TrailColors.background.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 17) {
+                    screenTitle("Nearby help", subtitle: "Record what the injured hiker says")
+                    pairingCard
+                    incidentCard
+                    offlineNotesCard
+                }
+                .padding(18).padding(.bottom, 20)
+            }
+        }
+        .sheet(isPresented: $showOfflineNote) { HelperVoiceView(incident: nil).environmentObject(model) }
+        .sheet(item: $voiceIncident) { HelperVoiceView(incident: $0).environmentObject(model) }
+    }
+
+    private var pairingCard: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            Text("NEARBY IPHONES")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+            Text("Trailbox looks for other iPhones automatically. After SOS, it sends a small help alert without medical details or exact GPS.")
+                .font(.caption).foregroundStyle(.white.opacity(0.65))
+            HStack(spacing: 7) {
+                Circle().fill(model.connectedPeers > 0 ? TrailColors.green : TrailColors.orange)
+                    .frame(width: 7, height: 7)
+                Text(model.edgeStatus).font(.subheadline)
+            }
+            Text("\(model.connectedPeers) nearby iPhone(s) connected")
+                .font(.caption).foregroundStyle(.white.opacity(0.55))
+        }
+        .trailCard()
+    }
+
+    private var incidentCard: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            Text("RECEIVED INCIDENT")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+            if let incident = model.nearbyIncidents.last {
+                Text(incident.payload["what_happened"] ?? "Help requested")
+                    .font(.title3.bold())
+                if let lat = incident.payload["latitude"], let lon = incident.payload["longitude"] {
+                    Text("Last position: \(lat), \(lon)")
+                        .font(.system(.caption, design: .monospaced)).foregroundStyle(.white.opacity(0.65))
+                }
+                Button("Record their voice") { voiceIncident = incident }
+                    .buttonStyle(TrailActionStyle(primary: true))
+                    .accessibilityIdentifier("trailbox.recordVoice")
+            } else {
+                Text("Waiting for a nearby help alert.")
+                    .font(.subheadline).foregroundStyle(.white.opacity(0.62))
+            }
+        }
+        .trailCard()
+    }
+
+    private var offlineNotesCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("OFFLINE VOICE NOTES")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+            Text("Record now, even without a connection. The note stays on this iPhone until a nearby help alert arrives.")
+                .font(.caption).foregroundStyle(.white.opacity(0.62))
+            Button("Record an offline note") { showOfflineNote = true }
+                .buttonStyle(TrailActionStyle())
+            ForEach(model.offlineVoiceNotes.reversed()) { note in
+                VStack(alignment: .leading, spacing: 7) {
+                    Text(note.payload["transcript"] ?? "Voice note")
+                        .font(.subheadline).lineLimit(3)
+                    HStack {
+                        Text(note.recordedAt, style: .time)
+                            .font(.caption2).foregroundStyle(.white.opacity(0.45))
+                        Spacer()
+                        Button(voicePlayer.playingID == note.id ? "Stop" : "Play voice") {
+                            voicePlayer.toggle(note)
+                        }
+                        .font(.caption.bold())
+                    }
+                    if let incident = model.nearbyIncidents.last {
+                        let attached = model.events.contains {
+                            $0.tripID == incident.tripID && $0.payload["source_note_id"] == note.id
+                        }
+                        Button(attached ? "Attached to incident" : "Attach to this incident") {
+                            _ = model.attachOfflineVoice(note: note, to: incident.tripID)
+                        }
+                        .font(.caption.bold())
+                        .disabled(attached)
+                    }
+                }
+                .padding(11).frame(maxWidth: .infinity, alignment: .leading)
+                .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 11))
+            }
+        }
+        .trailCard()
+    }
+}
+
+private struct ReportScreen: View {
+    @EnvironmentObject private var model: TrailboxViewModel
+    @StateObject private var voicePlayer = OfflineVoicePlayer()
+    @State private var showGuardianSetup = false
+    @State private var showEvents = false
+
+    var body: some View {
+        ZStack {
+            TrailColors.background.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 17) {
+                    screenTitle("Rescuer report", subtitle: "What we know, and what was sent")
+                    incidentFacts
+                    guardianCard
+                    eventCard
+                }
+                .padding(18).padding(.bottom, 20)
+            }
+        }
+        .sheet(isPresented: $showGuardianSetup) { ConnectivityView().environmentObject(model) }
+        .sheet(isPresented: $showEvents) { eventSheet }
+    }
+
+    private var incidentFacts: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack {
+                Text("INCIDENT FACTS")
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                Spacer()
+                Text("ON THIS IPHONE").font(.system(size: 9, weight: .bold)).foregroundStyle(TrailColors.green)
+            }
+            if let sos = model.reportSOS {
+                if sos.payload["demo"] == "true" {
+                    Text("DEMO INCIDENT · GPX position may be simulated")
+                        .font(.caption.bold()).foregroundStyle(TrailColors.orange)
+                }
+                fact("What happened", sos.payload["what_happened"] ?? "Unknown")
+                fact("Location", location(for: sos))
+                fact("Injuries", sos.payload["injuries"] ?? "Unknown")
+                if let voice = model.reportVoice {
+                    fact("Helper's voice note", voice.payload["transcript"] ?? "No reviewed text")
+                    Button(voicePlayer.playingID == voice.id ? "Stop voice" : "Play voice note") {
+                        voicePlayer.toggle(voice)
+                    }
+                    .font(.subheadline.bold())
+                } else {
+                    Text("Waiting for a nearby helper's voice note")
+                        .font(.caption).foregroundStyle(.white.opacity(0.56))
+                }
+            } else {
+                Text("No SOS yet. Start a hike and use a demo trigger to show the full handoff.")
+                    .font(.subheadline).foregroundStyle(.white.opacity(0.62))
+            }
+        }
+        .trailCard()
+    }
+
+    private func fact(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label.uppercased()).font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.45))
+            Text(value).font(.subheadline).textSelection(.enabled)
+        }
+    }
+
+    private func location(for sos: TrailEvent) -> String {
+        guard let lat = sos.payload["latitude"], let lon = sos.payload["longitude"] else { return "Unavailable" }
+        return "\(lat), \(lon) · \(sos.payload["location_source"] ?? "unknown source")"
+    }
+
+    private var guardianCard: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack {
+                Text("REPORT DELIVERY")
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                Spacer()
+                Circle().fill(model.cloudStatus.hasPrefix("Synced") ? .cyan : .gray)
+                    .frame(width: 7, height: 7)
+            }
+            Text(model.cloudStatus).font(.caption).foregroundStyle(.white.opacity(0.67))
+            Button("Connect report service") { showGuardianSetup = true }
+                .buttonStyle(TrailActionStyle())
+            Button("Send incident") { Task { await model.syncCloud() } }
+                .buttonStyle(TrailActionStyle(primary: true))
+            if model.reportSOS != nil {
+                Button("Get rescuer report") { Task { await model.refreshGuardianReport() } }
+                    .font(.subheadline.bold())
+                Text(model.guardianReportStatus)
+                    .font(.caption).foregroundStyle(.white.opacity(0.58))
+            }
+            if !model.guardianReport.isEmpty {
+                Text(model.guardianReport)
+                    .font(.system(size: 13, design: .monospaced))
+                    .textSelection(.enabled)
+                    .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
+            }
+            Text("Your incident facts stay available offline. The server sends the final report when connected.")
+                .font(.caption2).foregroundStyle(.white.opacity(0.48))
+        }
+        .trailCard()
     }
 
     private var eventCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("BLACK BOX", systemImage: "externaldrive.fill")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                Spacer()
-                Text("SQLITE • ON DEVICE").font(.system(size: 9, weight: .bold)).foregroundStyle(.mint)
-            }
-            HStack(spacing: 12) {
-                metric("\(model.events.count)", "EVENTS STORED")
-                metric("\(model.pendingCount)", "PENDING SYNC")
-                metric("\(Set(model.events.map(\.type)).count)", "EVENT TYPES")
-            }
-            Button { showEvents = true } label: {
-                HStack {
-                    Text("Inspect event log")
-                    Spacer()
-                    Image(systemName: "arrow.up.right")
-                }
-            }
-            .buttonStyle(TrailButtonStyle(prominent: false))
-            Button { model.checkIn() } label: {
-                Label("Record demo check-in", systemImage: "checkmark.shield")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(TrailButtonStyle(prominent: false))
-            .accessibilityIdentifier("trailbox.checkIn")
-        }
-        .cardStyle()
-    }
-
-    private var tripPlanCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label("TRIP PLAN", systemImage: "list.clipboard")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                Spacer()
-                Text(model.hasTripPlan ? "SAVED" : "SET UP")
-                    .font(.system(size: 9, weight: .bold)).foregroundStyle(.mint)
-            }
-            Text(model.hasTripPlan ? "\(model.groupName) · Return \(model.expectedReturn.formatted(date: .omitted, time: .shortened))" : "Add a return time and emergency contact before starting.")
-                .font(.system(size: 12)).foregroundStyle(.white.opacity(0.7))
-            Button { showTripPlan = true } label: {
-                Label(model.hasTripPlan ? "Edit trip plan" : "Plan hike", systemImage: "square.and.pencil")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(TrailButtonStyle(prominent: false))
-            .accessibilityIdentifier("trailbox.tripPlan")
-        }
-        .cardStyle()
-    }
-
-    private var connectionCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label("AGENT HANDOFFS", systemImage: "point.3.connected.trianglepath.dotted")
+        VStack(alignment: .leading, spacing: 9) {
+            Text("EVENT HISTORY")
                 .font(.system(size: 11, weight: .bold, design: .monospaced))
-            Text("Nearby: \(model.edgeStatus)")
-                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.7))
-            Text("Guardian: \(model.cloudStatus)")
-                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.7))
-            Button { showConnectivity = true } label: {
-                Label("Configure edge and cloud", systemImage: "network")
-                    .frame(maxWidth: .infinity)
-            }.buttonStyle(TrailButtonStyle(prominent: false))
-        }.cardStyle()
-    }
-
-    private var safetyQuickAction: some View {
-        HStack(spacing: 12) {
-            Image(systemName: model.isLiveTracking ? "location.north.line.fill" : "shield.lefthalf.filled")
-                .foregroundStyle(model.isLiveTracking ? .mint : .orange)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(model.isLiveTracking ? "LIVE SAFETY ACTIVE" : "LIVE SAFETY OFF")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                Text(model.isLiveTracking ? "Monitoring GPS, impact, and movement" : "Start tracking before your hike")
-                    .font(.system(size: 10)).foregroundStyle(.white.opacity(0.6))
-            }
-            Spacer()
-            Button(model.isLiveTracking ? "Stop" : "Start") {
-                model.isLiveTracking ? model.stopLive() : model.startLive()
-            }
-            .buttonStyle(.borderedProminent).tint(model.isLiveTracking ? .gray : .green)
+            Text("\(model.events.count) saved events · \(model.pendingCount) queued for sync")
+                .font(.subheadline).foregroundStyle(.white.opacity(0.65))
+            Button("View event log") { showEvents = true }
+                .buttonStyle(TrailActionStyle())
         }
-        .padding(12)
-        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
-    }
-
-    private var liveTrailCard: some View {
-        VStack(alignment: .leading, spacing: 11) {
-            Label("LIVE TRAIL SAFETY", systemImage: "figure.hiking")
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
-            Text("A possible fall, two off-route GPS readings, or 20 minutes without movement opens a check-in. No response in 2 minutes records an SOS with location.")
-                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.68))
-            Text(model.importedRouteName.map { "Route: \($0)" } ?? "Import a GPX trail to enable off-route checks")
-                .font(.system(size: 11)).foregroundStyle(.mint)
-            Button("Import GPX trail") { showGPXImporter = true }
-                .buttonStyle(TrailButtonStyle(prominent: false))
-            Button(model.isLiveTracking ? "Stop live monitoring" : "Start live monitoring") {
-                model.isLiveTracking ? model.stopLive() : model.startLive()
-            }
-            .buttonStyle(TrailButtonStyle(prominent: true))
-            Text(model.liveStatus).font(.system(size: 11)).foregroundStyle(.white.opacity(0.6))
-            HStack {
-                Button("Demo fall") { model.simulateFallCheckIn() }
-                Button("Demo off-route") { model.simulateOffRouteCheckIn() }
-                Button("Demo stillness") { model.simulateStillnessCheckIn() }
-            }
-            .font(.system(size: 10, weight: .bold))
-            .buttonStyle(.bordered)
-            .disabled(!model.isLiveTracking)
-            if let reason = model.checkInReason {
-                Text("CHECK-IN: \(reason.replacingOccurrences(of: "_", with: " ").uppercased())")
-                    .foregroundStyle(.orange).font(.system(size: 11, weight: .bold))
-            }
-        }.cardStyle()
-    }
-
-    private var nearbyIncidentCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label("NEARBY HIKER", systemImage: "person.2.wave.2")
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
-            Text("Pair with the incident code in Agent connections. A received SOS appears here for a passerby to record the injured person's voice.")
-                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.65))
-            if model.nearbyIncidents.isEmpty {
-                Text("No paired incident received").font(.system(size: 11)).foregroundStyle(.orange)
-            }
-            ForEach(model.nearbyIncidents) { incident in
-                Button {
-                    voiceIncident = incident
-                } label: {
-                    Label("Record voice for incident \(incident.tripID.prefix(8))", systemImage: "waveform")
-                        .frame(maxWidth: .infinity)
-                }.buttonStyle(TrailButtonStyle(prominent: false))
-            }
-        }.cardStyle()
-    }
-
-    private var emergencyCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("EMERGENCY READINESS", systemImage: "cross.case.fill")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                Spacer()
-                Text("LOCAL FIRST").font(.system(size: 9, weight: .bold)).foregroundStyle(.orange)
-            }
-            Text(agent.status).font(.system(size: 12)).foregroundStyle(.white.opacity(0.7))
-            if !agent.isReady {
-                Button { agent.downloadModel() } label: {
-                    Label("Prepare Liquid offline (696 MB)", systemImage: "arrow.down.circle")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(TrailButtonStyle(prominent: false))
-                .disabled(agent.isBusy)
-                .accessibilityIdentifier("trailbox.downloadLiquid")
-            }
-            Button { showEmergency = true } label: {
-                Label("Record emergency", systemImage: "sos.circle.fill")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(TrailButtonStyle(prominent: false))
-            .accessibilityIdentifier("trailbox.openEmergency")
-            if model.activeIncidentID == model.tripID {
-                Text("Incident code: \(model.tripID)").font(.system(size: 11, design: .monospaced))
-                    .textSelection(.enabled).foregroundStyle(.orange)
-            }
-            Text("SOS saves immediately. Share the incident code with a nearby helper; only paired phones exchange this incident.")
-                .font(.system(size: 10)).foregroundStyle(.white.opacity(0.48))
-        }
-        .cardStyle()
-    }
-
-    private func metric(_ value: String, _ title: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(value).font(.system(size: 24, weight: .bold, design: .rounded)).foregroundStyle(.white)
-            Text(title).font(.system(size: 8, weight: .bold, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.45))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var safetyNote: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.shield.fill").foregroundStyle(.orange)
-            Text("Route replay is a demo. Nearby and Guardian connections require setup and are not a substitute for emergency services.")
-                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.6))
-        }.padding(.horizontal, 4).padding(.bottom, 15)
+        .trailCard()
     }
 
     private var eventSheet: some View {
@@ -456,47 +443,53 @@ struct ContentView: View {
             List(model.events.reversed()) { event in
                 VStack(alignment: .leading, spacing: 5) {
                     HStack {
-                        Text(event.type.rawValue.uppercased())
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        Text(event.type.rawValue.replacingOccurrences(of: "_", with: " ").capitalized)
+                            .font(.subheadline.bold())
                         Spacer()
-                        Text(event.recordedAt, style: .time)
+                        Text(event.recordedAt, style: .time).font(.caption).foregroundStyle(.secondary)
+                    }
+                    if event.type == .injuryVoice {
+                        Text(event.payload["transcript"] ?? "Voice clip recorded")
                             .font(.caption).foregroundStyle(.secondary)
+                    } else if let message = event.payload["message"] ?? event.payload["what_happened"] {
+                        Text(message).font(.caption).foregroundStyle(.secondary)
                     }
-                    ForEach(event.payload.keys.sorted(), id: \.self) { key in
-                        Text("\(key): \(key == "audio_m4a_base64" ? "Voice clip stored (\((event.payload[key] ?? "").count) encoded characters)" : (event.payload[key] ?? ""))")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                    }
-                    Text("ID: \(event.id)").font(.system(size: 9, design: .monospaced))
-                        .foregroundStyle(.tertiary)
+                    Text(event.id).font(.system(size: 9, design: .monospaced)).foregroundStyle(.tertiary)
                 }
-                .padding(.vertical, 4)
             }
-            .navigationTitle("Black Box Events")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) { Button("Done") { showEvents = false } }
-            }
+            .navigationTitle("Event log")
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { showEvents = false } } }
         }
     }
 }
 
-private struct TrailButtonStyle: ButtonStyle {
-    var prominent: Bool
+private func screenTitle(_ title: String, subtitle: String) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+        Text(title).font(.system(size: 30, weight: .bold, design: .rounded))
+        Text(subtitle).font(.subheadline).foregroundStyle(.white.opacity(0.58))
+    }
+}
+
+private struct TrailActionStyle: ButtonStyle {
+    var primary = false
+    var danger = false
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 14, weight: .bold, design: .rounded))
-            .foregroundStyle(prominent ? Color.black : Color.white)
-            .padding(.horizontal, 12).frame(height: 46)
-            .background(prominent ? Color.mint : Color.white.opacity(0.1),
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 45)
+            .foregroundStyle(primary ? Color.black : (danger ? Color.white : TrailColors.green))
+            .background(primary ? TrailColors.green : (danger ? Color.red.opacity(0.82) : Color.white.opacity(0.08)),
                         in: RoundedRectangle(cornerRadius: 12))
             .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
 
 private extension View {
-    func cardStyle() -> some View {
-        self.padding(16)
-            .background(Color.white.opacity(0.065), in: RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Color.white.opacity(0.09)))
+    func trailCard() -> some View {
+        padding(16)
+            .background(TrailColors.card, in: RoundedRectangle(cornerRadius: 20))
+            .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.white.opacity(0.08)))
     }
 }

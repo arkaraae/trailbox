@@ -96,3 +96,43 @@ final class HelperVoiceRecorder: ObservableObject {
         continuation.resume(returning: value)
     }
 }
+
+/// Plays the AAC bytes saved in an append-only voice event; no network is needed.
+@MainActor
+final class OfflineVoicePlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
+    @Published private(set) var playingID: String?
+    @Published private(set) var status = ""
+    private var player: AVAudioPlayer?
+
+    func toggle(_ note: TrailEvent) {
+        if playingID == note.id {
+            player?.stop()
+            player = nil
+            playingID = nil
+            status = "Stopped"
+            return
+        }
+        guard let encoded = note.payload["audio_m4a_base64"],
+              let data = Data(base64Encoded: encoded) else {
+            status = "Voice clip unavailable"
+            return
+        }
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback)
+            try AVAudioSession.sharedInstance().setActive(true)
+            player = try AVAudioPlayer(data: data)
+            player?.delegate = self
+            guard player?.play() == true else { status = "Could not play voice clip"; return }
+            playingID = note.id
+            status = "Playing voice clip"
+        } catch { status = "Playback: \(error.localizedDescription)" }
+    }
+
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Task { @MainActor in
+            self.player = nil
+            self.playingID = nil
+            self.status = flag ? "Finished" : "Playback stopped"
+        }
+    }
+}

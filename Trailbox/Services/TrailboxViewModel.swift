@@ -21,6 +21,8 @@ final class TrailboxViewModel: ObservableObject {
     @Published private(set) var expectedReturn = Date().addingTimeInterval(3 * 3_600)
     @Published var cameraPosition: MapCameraPosition = .automatic
     @Published private(set) var cloudStatus = "Not configured"
+    @Published private(set) var guardianReport = ""
+    @Published private(set) var guardianReportStatus = "Not checked"
     @Published private(set) var edgeStatus = "Not connected"
     @Published private(set) var connectedPeers = 0
     @Published private(set) var uploadedEventIDs: Set<String> = []
@@ -48,7 +50,7 @@ final class TrailboxViewModel: ObservableObject {
     private var previousLiveLocation: CLLocation?
     private var liveStartedAt: Date?
     private var offRouteSamples = 0
-    private var relayIncidentID: String?
+    private var checkInIsDemo = false
 
     var currentPoint: TrackPoint? { points.indices.contains(pointIndex) ? points[pointIndex] : nil }
     var route: [CLLocationCoordinate2D] { points.map(\.coordinate) }
@@ -56,7 +58,12 @@ final class TrailboxViewModel: ObservableObject {
     var simulatedTime: Date {
         (points.first?.timestamp ?? Date()).addingTimeInterval(elapsedSeconds)
     }
-    var pendingCount: Int { events.filter { !uploadedEventIDs.contains($0.id) }.count }
+    var pendingCount: Int {
+        events.filter { isUploadable($0) && !uploadedEventIDs.contains($0.id) }.count
+    }
+    private func isUploadable(_ event: TrailEvent) -> Bool {
+        !(event.type == .injuryVoice && event.payload["pairing"] == "pending")
+    }
     var edgeConnected: Bool { connectedPeers > 0 || cloudStatus.hasPrefix("Trailhead synced") }
     var lastSignalCoordinate: CLLocationCoordinate2D? {
         guard let event = events.last(where: { $0.tripID == tripID && $0.type == .sync }),
@@ -72,6 +79,16 @@ final class TrailboxViewModel: ObservableObject {
         return Int(a.distance(from: b).rounded())
     }
     var hasTripPlan: Bool { (!groupName.isEmpty && !contactEmail.isEmpty) || events.contains(where: { $0.tripID == tripID && $0.type == .tripPlan }) }
+    var reportIncidentID: String { activeIncidentID ?? tripID }
+    var reportSOS: TrailEvent? {
+        events.last(where: { $0.tripID == reportIncidentID && $0.type == .sos })
+    }
+    var reportVoice: TrailEvent? {
+        events.last(where: { $0.tripID == reportIncidentID && $0.type == .injuryVoice && $0.payload["pairing"] != "pending" })
+    }
+    var offlineVoiceNotes: [TrailEvent] {
+        events.filter { $0.type == .injuryVoice && $0.deviceID == deviceID && $0.payload["pairing"] == "pending" }
+    }
     var nearbyIncidents: [TrailEvent] {
         events.filter { $0.tripID == activeIncidentID && $0.type == .sos && $0.deviceID != deviceID }
     }
@@ -107,7 +124,8 @@ final class TrailboxViewModel: ObservableObject {
                     span: MKCoordinateSpan(latitudeDelta: 0.025, longitudeDelta: 0.025)))
             }
         } catch { errorMessage = "Setup failed: \(error.localizedDescription)" }
-        configureRelay(for: tripID)
+        configureRelay()
+        relay?.start()
         liveMonitor.onStatus = { [weak self] in self?.liveStatus = $0 }
         liveMonitor.onImpact = { [weak self] impact in
             self?.raiseCheckIn(reason: "possible_fall", detail: String(format: "Impact %.1f g", impact))
@@ -124,19 +142,8 @@ final class TrailboxViewModel: ObservableObject {
     func startRelay() { relay?.start() }
     func stopRelay() { relay?.stop() }
 
-    /// The helper enters the incident code visible on the injured phone. Their own trip stays intact.
-    func helpIncident(code: String) {
-        let value = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        guard UUID(uuidString: value) != nil else { errorMessage = "Enter the incident code shown on the injured phone"; return }
-        relay?.stop()
-        activeIncidentID = value
-        configureRelay(for: value)
-        relay?.start()
-    }
-
-    private func configureRelay(for incidentID: String) {
-        relayIncidentID = incidentID
-        let service = EdgeRelayService(tripID: incidentID, deviceID: deviceID)
+    private func configureRelay() {
+        let service = EdgeRelayService(deviceID: deviceID)
         service.onStatus = { [weak self] status, count in
             self?.edgeStatus = status
             self?.connectedPeers = count
@@ -147,6 +154,11 @@ final class TrailboxViewModel: ObservableObject {
             do {
                 try store.merge(incoming)
                 self.events = try store.allEvents()
+                if let newest = incoming.last(where: { $0.type == .sos && $0.deviceID != self.deviceID }) {
+                    self.activeIncidentID = newest.tripID
+                    self.guardianReport = ""
+                    self.guardianReportStatus = "Not checked"
+                }
                 if UserDefaults.standard.string(forKey: "trailbox.guardianURL") != nil {
                     Task { await self.syncCloud() }
                 }
@@ -193,6 +205,7 @@ final class TrailboxViewModel: ObservableObject {
             }
         }
         let plan = events.last(where: { $0.tripID == tripID && $0.type == .tripPlan })
+        let uploadableEvents = events.filter { isUploadable($0) }
         guard !forcedOffline else { cloudStatus = "Offline; events queued locally"; return }
         cloudStatus = "Uploading events…"
         do {
@@ -204,23 +217,40 @@ final class TrailboxViewModel: ObservableObject {
                let returnDate = ISO8601DateFormatter().date(from: returnString) {
                 try await CloudGuardianClient.upload(tripID: tripID, groupName: group,
                                                       contactName: contact, contactEmail: email,
-                                                      expectedReturn: returnDate, events: events)
+                                                      expectedReturn: returnDate, events: uploadableEvents)
             } else {
-                try await CloudGuardianClient.uploadEvents(events)
+                try await CloudGuardianClient.uploadEvents(uploadableEvents)
             }
-            uploadedEventIDs.formUnion(events.map(\.id))
+            uploadedEventIDs.formUnion(uploadableEvents.map(\.id))
             UserDefaults.standard.set(Array(uploadedEventIDs), forKey: "trailbox.uploadedEventIDs")
             let hostname = URL(string: UserDefaults.standard.string(forKey: "trailbox.guardianURL") ?? "")?.host ?? ""
             let local = hostname.hasSuffix(".local") || hostname == "localhost" || hostname.hasPrefix("192.168.") || hostname.hasPrefix("10.")
-            cloudStatus = local ? "Trailhead synced \(events.count) events" : "Synced \(events.count) events"
+            cloudStatus = local ? "Trailhead synced \(uploadableEvents.count) events" : "Synced \(uploadableEvents.count) events"
             recordSignalBreadcrumb()
+            if reportSOS != nil { Task { await refreshGuardianReport() } }
         } catch { cloudStatus = "Upload pending: \(error.localizedDescription)" }
+    }
+
+    func refreshGuardianReport() async {
+        guard reportSOS != nil else { guardianReportStatus = "No SOS recorded"; return }
+        guardianReportStatus = "Checking Guardian…"
+        do {
+            let result = try await CloudGuardianClient.fetchStatus(tripID: reportIncidentID)
+            if let packet = result.escalations.reversed().compactMap(\.packet).first {
+                guardianReport = packet
+                guardianReportStatus = "Report received from Guardian"
+            } else if let latest = result.escalations.last {
+                guardianReportStatus = "Guardian: \(latest.status)" +
+                    (latest.lastError.map { " · \($0)" } ?? "")
+            } else {
+                guardianReportStatus = "Guardian has no escalation yet"
+            }
+        } catch { guardianReportStatus = "Report unavailable: \(error.localizedDescription)" }
     }
 
     func startOrPause() {
         if isPlaying { stopTimer(); return }
         guard !points.isEmpty, !isFinished else { return }
-        guard hasTripPlan else { errorMessage = "Save a trip plan before starting"; return }
         isPlaying = true
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -304,14 +334,15 @@ final class TrailboxViewModel: ObservableObject {
     @discardableResult
     func recordEmergency(whatHappened: String, injuries: String, people: Int,
                          canWalk: Bool, coordinate: CLLocationCoordinate2D?,
-                         locationSource: String) -> Bool {
+                         locationSource: String, isDemo: Bool = false) -> Bool {
         var payload = ["what_happened": whatHappened, "injuries": injuries,
                        "people_affected": String(people), "can_walk": String(canWalk),
                        "location_source": locationSource, "delivery": "local_pending",
                        "group": groupName,
                        "contact_name": contactName, "contact_email": contactEmail,
                        "expected_return": ISO8601DateFormatter().string(from: expectedReturn),
-                       "route": importedRouteName ?? "sample-hike.gpx"]
+                       "route": importedRouteName ?? "sample-hike.gpx",
+                       "demo": String(isDemo)]
         if let medical = TrailSecurity.read("medical.\(tripID)"), !medical.isEmpty {
             payload["medical"] = medical
         }
@@ -322,13 +353,41 @@ final class TrailboxViewModel: ObservableObject {
         let saved = write(.sos, payload: payload)
         if saved {
             activeIncidentID = tripID
-            if relayIncidentID != tripID {
-                relay?.stop()
-                configureRelay(for: tripID)
-            }
             relay?.start()
+            relay?.sendSnapshot()
         }
         return saved
+    }
+
+    @discardableResult
+    func recordOfflineVoice(transcript: String, audioBase64: String) -> Bool {
+        guard !audioBase64.isEmpty, !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Record audio and review its note before saving"
+            return false
+        }
+        let note = TrailEvent(tripID: tripID, deviceID: deviceID, type: .injuryVoice,
+            payload: ["transcript": transcript, "audio_m4a_base64": audioBase64,
+                      "pairing": "pending", "source": "offline_helper_note"])
+        return appendEvent(note)
+    }
+
+    @discardableResult
+    func attachOfflineVoice(note: TrailEvent, to incidentID: String) -> Bool {
+        guard note.type == .injuryVoice, note.deviceID == deviceID,
+              note.payload["pairing"] == "pending",
+              events.contains(where: { $0.tripID == incidentID && $0.type == .sos }) else {
+            errorMessage = "Pair with the injured hiker before attaching this note"
+            return false
+        }
+        if events.contains(where: { $0.tripID == incidentID && $0.payload["source_note_id"] == note.id }) {
+            return true
+        }
+        var payload = note.payload
+        payload["pairing"] = "attached"
+        payload["source_note_id"] = note.id
+        payload["captured_by"] = "nearby_helper"
+        return appendEvent(TrailEvent(tripID: incidentID, deviceID: deviceID,
+                                      type: .injuryVoice, payload: payload))
     }
 
     @discardableResult
@@ -339,7 +398,7 @@ final class TrailboxViewModel: ObservableObject {
         }
         let event = TrailEvent(tripID: incidentID, deviceID: deviceID, type: .injuryVoice,
             payload: ["transcript": transcript, "audio_m4a_base64": audioBase64,
-                      "captured_by": "nearby_helper", "source": "voice_recording"])
+                      "pairing": "attached", "captured_by": "nearby_helper", "source": "voice_recording"])
         return appendEvent(event)
     }
 
@@ -397,7 +456,7 @@ final class TrailboxViewModel: ObservableObject {
             let inserted = try store.append(event)
             events = try store.allEvents()
             relay?.sendSnapshot()
-            if UserDefaults.standard.string(forKey: "trailbox.guardianURL") != nil {
+            if isUploadable(event), UserDefaults.standard.string(forKey: "trailbox.guardianURL") != nil {
                 Task { await syncCloud() }
             }
             return inserted
@@ -477,11 +536,16 @@ final class TrailboxViewModel: ObservableObject {
         if let promptedAt = checkInPromptedAt,
            SafetyRules.checkInExpired(now: Date(), promptedAt: promptedAt) {
             let reason = checkInReason ?? "unanswered_check_in"
+            let demo = checkInIsDemo
+            let coordinate = liveCoordinate ?? (demo ? currentPoint?.coordinate : nil)
             checkInReason = nil
             checkInPromptedAt = nil
+            checkInIsDemo = false
             _ = recordEmergency(whatHappened: "No response to \(reason) check-in",
                                 injuries: "unknown", people: 1, canWalk: false,
-                                coordinate: liveCoordinate, locationSource: liveCoordinate == nil ? "unavailable" : "live_gps")
+                                coordinate: coordinate,
+                                locationSource: liveCoordinate != nil ? "live_gps" : (demo ? "gpx_replay_demo" : "unavailable"),
+                                isDemo: demo)
         } else if lastLocation != nil && checkInReason == nil && SafetyRules.needsStillnessCheckIn(now: Date(), lastMovement: lastMovement) {
             raiseCheckIn(reason: "stillness", detail: "No movement for 20 minutes")
         }
@@ -498,6 +562,7 @@ final class TrailboxViewModel: ObservableObject {
     func simulateFallCheckIn() {
         guard isLiveTracking else { errorMessage = "Start live monitoring first"; return }
         if SafetyRules.possibleFall(impactG: 3.2) {
+            checkInIsDemo = true
             raiseCheckIn(reason: "possible_fall", detail: "Demo impact 3.2 g")
         }
     }
@@ -506,6 +571,7 @@ final class TrailboxViewModel: ObservableObject {
         guard isLiveTracking, let first = route.first else { errorMessage = "Start monitoring with a route first"; return }
         let offset = CLLocationCoordinate2D(latitude: first.latitude + 0.002, longitude: first.longitude)
         if SafetyRules.offRoute(offset, route: route) {
+            checkInIsDemo = true
             raiseCheckIn(reason: "off_route", detail: "Demo position more than 60 m from route")
         }
     }
@@ -515,6 +581,7 @@ final class TrailboxViewModel: ObservableObject {
         lastLocation = CLLocation(latitude: liveCoordinate?.latitude ?? 0,
                                   longitude: liveCoordinate?.longitude ?? 0)
         lastMovement = Date().addingTimeInterval(-21 * 60)
+        checkInIsDemo = true
         evaluateLiveSafety()
     }
 
@@ -522,6 +589,7 @@ final class TrailboxViewModel: ObservableObject {
         guard let reason = checkInReason else { return }
         checkInReason = nil
         checkInPromptedAt = nil
+        checkInIsDemo = false
         lastMovement = Date()
         offRouteSamples = 0
         write(.checkedIn, payload: ["reason": reason, "status": "safe", "source": "hiker_response"])
@@ -529,11 +597,16 @@ final class TrailboxViewModel: ObservableObject {
 
     func sendSOSForCheckIn() {
         guard let reason = checkInReason else { return }
+        let demo = checkInIsDemo
+        let coordinate = liveCoordinate ?? (demo ? currentPoint?.coordinate : nil)
         checkInReason = nil
         checkInPromptedAt = nil
+        checkInIsDemo = false
         _ = recordEmergency(whatHappened: "Hiker requested help after \(reason) check-in",
                             injuries: "unknown", people: 1, canWalk: false,
-                            coordinate: liveCoordinate, locationSource: liveCoordinate == nil ? "unavailable" : "live_gps")
+                            coordinate: coordinate,
+                            locationSource: liveCoordinate != nil ? "live_gps" : (demo ? "gpx_replay_demo" : "unavailable"),
+                            isDemo: demo)
     }
 
     private func focusCurrentPoint() {

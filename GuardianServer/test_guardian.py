@@ -26,6 +26,7 @@ class GuardianTests(unittest.TestCase):
         self.assertEqual(calls, [("casey@example.test", "Packet: sos", "sos:sos-id")])
         process_pending(self.store, lambda _: "again", lambda *args: calls.append(args))
         self.assertEqual(len(calls), 1)
+        self.assertEqual(self.store.status("trip")["escalations"][0]["packet"], "Packet: sos")
 
     def test_passerby_voice_updates_report_without_audio_blob_in_prompt(self):
         sos = self.event("sos-voice", "sos")
@@ -41,6 +42,13 @@ class GuardianTests(unittest.TestCase):
                          "My ankle hurts and I cannot walk")
         self.assertNotIn("audio_m4a_base64", str(facts))
         self.assertEqual(len(self.store.pending()), 2)
+
+    def test_unpaired_voice_note_cannot_upload(self):
+        voice = self.event("draft", "injury_voice")
+        voice["payload"] = {"pairing": "pending", "transcript": "Private draft"}
+        with self.assertRaisesRegex(ValueError, "unpaired voice note"):
+            self.store.add_events([voice])
+        self.assertEqual(self.store.status("trip")["eventCount"], 0)
 
     def test_sos_from_offline_hiker_recovers_trip_contact(self):
         store = GuardianStore()

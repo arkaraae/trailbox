@@ -40,6 +40,33 @@ enum CloudGuardianClient {
         try await post(body, to: base.appending(path: "events"), token: token)
     }
 
+    struct GuardianStatus: Decodable {
+        let escalations: [Escalation]
+        struct Escalation: Decodable {
+            let status: String
+            let packet: String?
+            let lastError: String?
+        }
+    }
+
+    static func fetchStatus(tripID: String) async throws -> GuardianStatus {
+        guard let rawURL = UserDefaults.standard.string(forKey: "trailbox.guardianURL"),
+              let base = URL(string: rawURL),
+              let token = TrailSecurity.read("guardianToken"), !token.isEmpty else {
+            throw UploadError.notConfigured
+        }
+        var request = URLRequest(url: base.appending(path: "status").appending(path: tripID))
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 20
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw UploadError.invalidResponse((response as? HTTPURLResponse)?.statusCode ?? 0)
+        }
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(GuardianStatus.self, from: data)
+    }
+
     private struct EventBatch: Encodable { let events: [TrailEvent] }
 
     private static func post<T: Encodable>(_ value: T, to url: URL, token: String) async throws {

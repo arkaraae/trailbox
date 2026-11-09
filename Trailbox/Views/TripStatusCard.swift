@@ -32,7 +32,7 @@ struct TripStatusCard: View {
                     .font(.system(size: 22, weight: .light))
                     .frame(width: 54, height: 54)
                     .background(.white.opacity(0.1), in: Circle())
-                Text(model.importedRouteName.map { ($0 as NSString).deletingPathExtension } ?? "Sample Hill Loop")
+                Text(model.importedRouteName.map { ($0 as NSString).deletingPathExtension } ?? "Demo route")
                     .font(.system(size: 24, weight: .medium, design: .rounded))
                     .foregroundStyle(Color(red: 0.58, green: 0.92, blue: 0.43))
                     .lineLimit(1)

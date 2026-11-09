@@ -62,6 +62,8 @@ class GuardianStore:
                     raise ValueError("invalid event type")
                 if any(not event.get(key) for key in ("id", "tripID", "deviceID", "recordedAt")):
                     raise ValueError("event missing required fields")
+                if event["type"] == "injury_voice" and (event.get("payload") or {}).get("pairing") == "pending":
+                    raise ValueError("unpaired voice note must stay on device")
                 recorded = parse_time(event["recordedAt"])
                 result = self.db.execute("INSERT OR IGNORE INTO events VALUES (?, ?, ?, ?, ?)",
                                          (event["id"], event["tripID"], event["type"],
@@ -132,7 +134,7 @@ class GuardianStore:
             trip = self.db.execute("SELECT trip_id, group_name, expected_return FROM trips WHERE trip_id=?", (trip_id,)).fetchone()
             if trip is None:
                 return None
-            rows = self.db.execute("SELECT id, reason, status, sent_at, last_error FROM escalations WHERE trip_id=?", (trip_id,)).fetchall()
+            rows = self.db.execute("SELECT id, reason, status, sent_at, last_error, packet FROM escalations WHERE trip_id=?", (trip_id,)).fetchall()
             count = self.db.execute("SELECT count(*) FROM events WHERE trip_id=?", (trip_id,)).fetchone()[0]
             last_position = self.db.execute("SELECT json FROM events WHERE trip_id=? AND type IN ('position','sos') ORDER BY recorded_at DESC LIMIT 1", (trip_id,)).fetchone()
         return {"trip": dict(trip), "eventCount": count,
@@ -185,7 +187,7 @@ STATUS_PAGE = """<!doctype html><html lang="en"><meta name="viewport" content="w
 <h1>Trailbox Guardian</h1><p>Enter a trip ID and ingest token to see its event status.</p>
 <input id="trip" placeholder="Trip ID"><input id="token" type="password" placeholder="Ingest token"><button id="load">Load status</button>
 <div id="result"></div><iframe id="map" title="Last known position" hidden></iframe>
-<script>document.getElementById('load').onclick=async()=>{const trip=document.getElementById('trip').value.trim();const token=document.getElementById('token').value;const result=document.getElementById('result');try{const response=await fetch('/status/'+encodeURIComponent(trip),{headers:{Authorization:'Bearer '+token}});if(!response.ok)throw Error('HTTP '+response.status);const data=await response.json();result.replaceChildren();const title=document.createElement('h2');title.textContent=data.trip.group_name;result.append(title);const detail=document.createElement('p');detail.textContent='Events: '+data.eventCount+' · Expected return: '+new Date(data.trip.expected_return*1000).toLocaleString();result.append(detail);for(const item of data.escalations){const row=document.createElement('p');row.textContent=item.reason+' · '+item.status+(item.last_error?' · '+item.last_error:'');result.append(row)}const p=data.lastPosition?.payload;const lat=Number(p?.latitude),lon=Number(p?.longitude);const map=document.getElementById('map');if(Number.isFinite(lat)&&Number.isFinite(lon)){const d=.01;map.src='https://www.openstreetmap.org/export/embed.html?bbox='+encodeURIComponent([lon-d,lat-d,lon+d,lat+d].join(','))+'&layer=mapnik&marker='+encodeURIComponent(lat+','+lon);map.hidden=false}else map.hidden=true}catch(error){result.textContent=error.message}};</script></html>"""
+<script>document.getElementById('load').onclick=async()=>{const trip=document.getElementById('trip').value.trim();const token=document.getElementById('token').value;const result=document.getElementById('result');try{const response=await fetch('/status/'+encodeURIComponent(trip),{headers:{Authorization:'Bearer '+token}});if(!response.ok)throw Error('HTTP '+response.status);const data=await response.json();result.replaceChildren();const title=document.createElement('h2');title.textContent=data.trip.group_name;result.append(title);const detail=document.createElement('p');detail.textContent='Events: '+data.eventCount+' · Expected return: '+new Date(data.trip.expected_return*1000).toLocaleString();result.append(detail);for(const item of data.escalations){const row=document.createElement('p');row.textContent=item.reason+' · '+item.status+(item.last_error?' · '+item.last_error:'');result.append(row);if(item.packet){const packet=document.createElement('pre');packet.textContent=item.packet;result.append(packet)}}const p=data.lastPosition?.payload;const lat=Number(p?.latitude),lon=Number(p?.longitude);const map=document.getElementById('map');if(Number.isFinite(lat)&&Number.isFinite(lon)){const d=.01;map.src='https://www.openstreetmap.org/export/embed.html?bbox='+encodeURIComponent([lon-d,lat-d,lon+d,lat+d].join(','))+'&layer=mapnik&marker='+encodeURIComponent(lat+','+lon);map.hidden=false}else map.hidden=true}catch(error){result.textContent=error.message}};</script></html>"""
 
 
 def make_handler(store, token):
