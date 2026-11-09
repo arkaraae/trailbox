@@ -27,6 +27,7 @@ final class TrailboxViewModel: ObservableObject {
     @Published private(set) var connectedPeers = 0
     @Published private(set) var uploadedEventIDs: Set<String> = []
     @Published private(set) var relay: EdgeRelayService?
+    let liquidAgent = LiquidTrailAgent()
     @Published private(set) var activeIncidentID: String?
     @Published private(set) var isLiveTracking = false
     @Published private(set) var liveStatus = "Live tracking off"
@@ -355,6 +356,9 @@ final class TrailboxViewModel: ObservableObject {
             activeIncidentID = tripID
             relay?.start()
             relay?.sendSnapshot()
+            liquidAgent.summarizeEmergency(events: events.filter { $0.tripID == tripID }) { [weak self] summary in
+                self?.recordAgentNote(question: "Emergency responder summary", answer: summary)
+            }
         }
         return saved
     }

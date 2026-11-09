@@ -36,7 +36,6 @@ struct ContentView: View {
 
 private struct HikeScreen: View {
     @EnvironmentObject private var model: TrailboxViewModel
-    @StateObject private var agent = LiquidTrailAgent()
     @State private var showPlan = false
     @State private var showEmergency = false
     @State private var showImporter = false
@@ -62,7 +61,7 @@ private struct HikeScreen: View {
         }
         .background(TrailColors.background)
         .sheet(isPresented: $showPlan) { TripPlanView().environmentObject(model) }
-        .sheet(isPresented: $showEmergency) { EmergencyView(agent: agent).environmentObject(model) }
+        .sheet(isPresented: $showEmergency) { EmergencyView(agent: model.liquidAgent).environmentObject(model) }
         .sheet(isPresented: $showControls) {
             NavigationStack {
                 ScrollView {
@@ -336,6 +335,7 @@ private struct ReportScreen: View {
                 VStack(alignment: .leading, spacing: 17) {
                     screenTitle("Rescuer report", subtitle: "What we know, and what was sent")
                     incidentFacts
+                    LiquidAgentCard(agent: model.liquidAgent)
                     guardianCard
                     eventCard
                 }
@@ -460,6 +460,39 @@ private struct ReportScreen: View {
             .navigationTitle("Event log")
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { showEvents = false } } }
         }
+    }
+}
+
+private struct LiquidAgentCard: View {
+    @EnvironmentObject private var model: TrailboxViewModel
+    @ObservedObject var agent: LiquidTrailAgent
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("LIQUID · ON THIS IPHONE")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+            Text(agent.status).font(.subheadline)
+            if !agent.isReady {
+                Button("Prepare offline model (696 MB)") { agent.downloadModel() }
+                    .buttonStyle(TrailActionStyle())
+                    .disabled(agent.isBusy)
+            }
+            if let note = model.events.last(where: {
+                $0.tripID == model.tripID && $0.type == .agentNote &&
+                $0.payload["question"] == "Emergency responder summary"
+            }) {
+                Text(note.payload["answer"] ?? "")
+                    .font(.subheadline).textSelection(.enabled)
+            } else if model.reportSOS != nil {
+                Text(agent.isBusy ? "Summarizing saved SOS facts…" :
+                     "SOS saved. A local summary requires the downloaded model.")
+                    .font(.caption).foregroundStyle(.secondary)
+            } else {
+                Text("Runs only after SOS. Safety checks use fixed rules.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .trailCard()
     }
 }
 
