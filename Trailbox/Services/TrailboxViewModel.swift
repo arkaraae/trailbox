@@ -63,7 +63,8 @@ final class TrailboxViewModel: ObservableObject {
         events.filter { isUploadable($0) && !uploadedEventIDs.contains($0.id) }.count
     }
     private func isUploadable(_ event: TrailEvent) -> Bool {
-        !(event.type == .injuryVoice && event.payload["pairing"] == "pending")
+        if event.type == .sos && event.payload["nearby_beacon"] == "true" { return false }
+        return !(event.type == .injuryVoice && event.payload["pairing"] == "pending")
     }
     var edgeConnected: Bool { connectedPeers > 0 || cloudStatus.hasPrefix("Trailhead synced") }
     var lastSignalCoordinate: CLLocationCoordinate2D? {
