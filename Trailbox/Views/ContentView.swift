@@ -247,7 +247,7 @@ private struct HelpScreen: View {
         VStack(alignment: .leading, spacing: 11) {
             Text("NEARBY IPHONES")
                 .font(.system(size: 11, weight: .bold, design: .monospaced))
-            Text("Trailbox looks for other iPhones automatically. After SOS, it sends a small help alert without medical details or exact GPS.")
+            Text("Trailbox finds nearby iPhones automatically. After SOS, it sends the help alert and your saved emergency report over an encrypted connection. The report may include injuries and location.")
                 .font(.caption).foregroundStyle(.white.opacity(0.65))
             HStack(spacing: 7) {
                 Circle().fill(model.connectedPeers > 0 ? TrailColors.green : TrailColors.orange)
@@ -270,6 +270,18 @@ private struct HelpScreen: View {
                 if let lat = incident.payload["latitude"], let lon = incident.payload["longitude"] {
                     Text("Last position: \(lat), \(lon)")
                         .font(.system(.caption, design: .monospaced)).foregroundStyle(.white.opacity(0.65))
+                }
+                if let report = model.nearbyReport {
+                    Text(report.payload["source"] == "on_device" ?
+                         "HIKER'S LIQUID SUMMARY" : "HIKER'S EMERGENCY REPORT")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundStyle(TrailColors.green)
+                    Text(report.payload["answer"] ?? "")
+                        .font(.subheadline).textSelection(.enabled)
+                        .accessibilityIdentifier("trailbox.nearbyReport")
+                } else {
+                    Text("Waiting for the hiker's report…")
+                        .font(.caption).foregroundStyle(.white.opacity(0.62))
                 }
                 Button("Record their voice") { voiceIncident = incident }
                     .buttonStyle(TrailActionStyle(primary: true))
@@ -479,7 +491,8 @@ private struct LiquidAgentCard: View {
             }
             if let note = model.events.last(where: {
                 $0.tripID == model.tripID && $0.type == .agentNote &&
-                $0.payload["question"] == "Emergency responder summary"
+                $0.payload["question"] == "Emergency responder summary" &&
+                $0.payload["source"] == "on_device"
             }) {
                 Text(note.payload["answer"] ?? "")
                     .font(.subheadline).textSelection(.enabled)

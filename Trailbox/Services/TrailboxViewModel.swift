@@ -64,6 +64,7 @@ final class TrailboxViewModel: ObservableObject {
     }
     private func isUploadable(_ event: TrailEvent) -> Bool {
         if event.type == .sos && event.payload["nearby_beacon"] == "true" { return false }
+        if event.type == .agentNote && event.payload["nearby_report"] == "true" { return false }
         return !(event.type == .injuryVoice && event.payload["pairing"] == "pending")
     }
     var edgeConnected: Bool { connectedPeers > 0 || cloudStatus.hasPrefix("Trailhead synced") }
@@ -93,6 +94,10 @@ final class TrailboxViewModel: ObservableObject {
     }
     var nearbyIncidents: [TrailEvent] {
         events.filter { $0.tripID == activeIncidentID && $0.type == .sos && $0.deviceID != deviceID }
+    }
+    var nearbyReport: TrailEvent? {
+        events.last(where: { $0.tripID == activeIncidentID && $0.type == .agentNote &&
+            $0.deviceID != deviceID && $0.payload["nearby_report"] == "true" })
     }
 
     init() {
@@ -357,6 +362,10 @@ final class TrailboxViewModel: ObservableObject {
             activeIncidentID = tripID
             relay?.start()
             relay?.sendSnapshot()
+            let location = coordinate.map { String(format: "%.5f, %.5f", $0.latitude, $0.longitude) } ?? "unknown"
+            let intake = "What happened: \(whatHappened)\nInjuries: \(injuries)\nPeople: \(people)\nCan walk: \(canWalk)\nLocation: \(location) (\(locationSource))"
+            write(.agentNote, payload: ["question": "Emergency responder summary",
+                                        "answer": intake, "source": "emergency_intake"])
             liquidAgent.summarizeEmergency(events: events.filter { $0.tripID == tripID }) { [weak self] summary in
                 self?.recordAgentNote(question: "Emergency responder summary", answer: summary)
             }

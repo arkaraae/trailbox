@@ -1,7 +1,7 @@
 import Foundation
 import MultipeerConnectivity
 
-/// Nearby phones receive a minimal SOS beacon. Medical details and exact GPS stay out of discovery.
+/// Nearby phones receive an SOS beacon and the hiker's saved emergency report over an encrypted session.
 @MainActor
 final class EdgeRelayService: NSObject, ObservableObject {
     @Published private(set) var status = "Looking for nearby iPhones" { didSet { onStatus?(status, peerCount) } }
@@ -58,12 +58,28 @@ final class EdgeRelayService: NSObject, ObservableObject {
                                      "location_source": "not_shared"])
             }
         guard !beacons.isEmpty else { return }
+        let incidentIDs = Set(beacons.map(\.tripID))
+        let reports = (eventsProvider?() ?? [])
+            .filter { $0.type == .agentNote && $0.deviceID == deviceID &&
+                      incidentIDs.contains($0.tripID) &&
+                      $0.payload["question"] == "Emergency responder summary" }
+            .suffix(5)
+            .compactMap { note -> TrailEvent? in
+                guard let answer = note.payload["answer"], !answer.isEmpty else { return nil }
+                return TrailEvent(id: "report:\(note.id)", tripID: note.tripID,
+                                  deviceID: note.deviceID, type: .agentNote,
+                                  recordedAt: note.recordedAt,
+                                  payload: ["nearby_report": "true",
+                                            "question": "Emergency responder summary",
+                                            "source": note.payload["source"] ?? "emergency_intake",
+                                            "answer": String(answer.prefix(2_000))])
+            }
         do {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
-            let data = try encoder.encode(beacons)
+            let data = try encoder.encode(beacons + reports)
             try session.send(data, toPeers: session.connectedPeers, with: .reliable)
-            status = "Help alert sent to \(session.connectedPeers.count) nearby iPhone(s)"
+            status = "Help alert and report sent to \(session.connectedPeers.count) nearby iPhone(s)"
         } catch { status = "Nearby error: \(error.localizedDescription)" }
     }
 }
@@ -102,17 +118,40 @@ extension EdgeRelayService: MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBr
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             guard let received = try? decoder.decode([TrailEvent].self, from: data) else { return }
-            let safe = received.prefix(5).compactMap { event -> TrailEvent? in
+            let beaconIDs = Set(received.compactMap { event -> String? in
                 guard event.type == .sos, event.id.hasPrefix("beacon:"),
                       event.payload["nearby_beacon"] == "true",
                       UUID(uuidString: event.tripID) != nil else { return nil }
-                return TrailEvent(id: event.id, tripID: event.tripID, deviceID: event.deviceID,
-                                  type: .sos, recordedAt: event.recordedAt,
-                                  payload: ["nearby_beacon": "true",
-                                            "what_happened": "Nearby hiker requested help",
-                                            "location_source": "not_shared"])
+                return event.tripID
+            })
+            let safe = received.prefix(10).compactMap { event -> TrailEvent? in
+                guard beaconIDs.contains(event.tripID), event.deviceID != deviceID else { return nil }
+                if event.type == .sos && event.id.hasPrefix("beacon:") {
+                    return TrailEvent(id: event.id, tripID: event.tripID, deviceID: event.deviceID,
+                                      type: .sos, recordedAt: event.recordedAt,
+                                      payload: ["nearby_beacon": "true",
+                                                "what_happened": "Nearby hiker requested help",
+                                                "location_source": "not_shared"])
+                }
+                if event.type == .agentNote, event.id.hasPrefix("report:"),
+                   event.payload["nearby_report"] == "true",
+                   event.payload["question"] == "Emergency responder summary",
+                   let answer = event.payload["answer"], !answer.isEmpty,
+                   answer.count <= 2_000 {
+                    return TrailEvent(id: event.id, tripID: event.tripID, deviceID: event.deviceID,
+                                      type: .agentNote, recordedAt: event.recordedAt,
+                                      payload: ["nearby_report": "true",
+                                                "question": "Emergency responder summary",
+                                                "source": event.payload["source"] ?? "emergency_intake",
+                                                "answer": answer])
+                }
+                return nil
             }
-            if !safe.isEmpty { receiveEvents?(safe); status = "Nearby help alert received" }
+            if !safe.isEmpty {
+                receiveEvents?(safe)
+                status = safe.contains(where: { $0.type == .agentNote }) ?
+                    "Nearby help alert and report received" : "Nearby help alert received"
+            }
         }
     }
     nonisolated func session(_ session: MCSession, didReceive stream: InputStream,
