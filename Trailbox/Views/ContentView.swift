@@ -285,6 +285,12 @@ private struct HelpScreen: View {
                     Text(report.payload["answer"] ?? "")
                         .font(.subheadline).textSelection(.enabled)
                         .accessibilityIdentifier("trailbox.nearbyReport")
+                } else if let report = incident.payload["emergency_report"] {
+                    Text("HIKER'S EMERGENCY REPORT")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundStyle(TrailColors.green)
+                    Text(report).font(.subheadline).textSelection(.enabled)
+                        .accessibilityIdentifier("trailbox.nearbyReport")
                 } else {
                     Text("Waiting for the hiker's report…")
                         .font(.caption).foregroundStyle(.white.opacity(0.62))

@@ -56,11 +56,21 @@ final class EdgeRelayService: NSObject, ObservableObject {
             .filter { $0.type == .sos && $0.deviceID == deviceID && $0.payload["nearby_beacon"] != "true" }
             .suffix(5)
             .map { sos in
-                TrailEvent(id: "beacon:\(sos.id)", tripID: sos.tripID, deviceID: sos.deviceID,
-                           type: .sos, recordedAt: sos.recordedAt,
-                           payload: ["nearby_beacon": "true",
-                                     "what_happened": "Nearby hiker requested help",
-                                     "location_source": "not_shared"])
+                let location: String
+                if let lat = sos.payload["latitude"], let lon = sos.payload["longitude"] {
+                    location = "\(lat), \(lon)"
+                } else { location = "unknown" }
+                let report = "What happened: \(sos.payload["what_happened"] ?? "unknown")\n" +
+                    "Injuries: \(sos.payload["injuries"] ?? "unknown")\n" +
+                    "People: \(sos.payload["people_affected"] ?? "unknown")\n" +
+                    "Can walk: \(sos.payload["can_walk"] ?? "unknown")\n" +
+                    "Location: \(location) (\(sos.payload["location_source"] ?? "unknown"))"
+                return TrailEvent(id: "beacon:\(sos.id):report", tripID: sos.tripID, deviceID: sos.deviceID,
+                                  type: .sos, recordedAt: sos.recordedAt,
+                                  payload: ["nearby_beacon": "true",
+                                            "what_happened": "Nearby hiker requested help",
+                                            "location_source": "not_shared",
+                                            "emergency_report": String(report.prefix(2_000))])
             }
         guard !beacons.isEmpty else { return }
         let incidentIDs = Set(beacons.map(\.tripID))
@@ -137,11 +147,15 @@ extension EdgeRelayService: MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBr
             let safe = received.prefix(10).compactMap { event -> TrailEvent? in
                 guard beaconIDs.contains(event.tripID) else { return nil }
                 if event.type == .sos && event.id.hasPrefix("beacon:") {
+                    var payload = ["nearby_beacon": "true",
+                                   "what_happened": "Nearby hiker requested help",
+                                   "location_source": "not_shared"]
+                    if let report = event.payload["emergency_report"],
+                       !report.isEmpty, report.count <= 2_000 {
+                        payload["emergency_report"] = report
+                    }
                     return TrailEvent(id: event.id, tripID: event.tripID, deviceID: event.deviceID,
-                                      type: .sos, recordedAt: event.recordedAt,
-                                      payload: ["nearby_beacon": "true",
-                                                "what_happened": "Nearby hiker requested help",
-                                                "location_source": "not_shared"])
+                                      type: .sos, recordedAt: event.recordedAt, payload: payload)
                 }
                 if event.type == .agentNote, event.id.hasPrefix("report:"),
                    event.payload["nearby_report"] == "true",
