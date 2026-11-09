@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @EnvironmentObject private var model: TrailboxViewModel
@@ -7,6 +8,8 @@ struct ContentView: View {
     @State private var showEmergency = false
     @State private var showTripPlan = false
     @State private var showConnectivity = false
+    @State private var showGPXImporter = false
+    @State private var voiceIncident: TrailEvent?
     @StateObject private var agent = LiquidTrailAgent()
 
     var body: some View {
@@ -16,9 +19,12 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     statusStrip
+                    safetyQuickAction
                     TripStatusCard(model: model)
                     tripPlanCard
                     connectionCard
+                    liveTrailCard
+                    nearbyIncidentCard
                     emergencyCard
                     mapCard
                     replayCard
@@ -34,6 +40,13 @@ struct ContentView: View {
         .sheet(isPresented: $showEmergency) { EmergencyView(agent: agent).environmentObject(model) }
         .sheet(isPresented: $showTripPlan) { TripPlanView().environmentObject(model) }
         .sheet(isPresented: $showConnectivity) { ConnectivityView().environmentObject(model) }
+        .sheet(item: $voiceIncident) { HelperVoiceView(incident: $0).environmentObject(model) }
+        .sheet(isPresented: Binding(get: { model.checkInReason != nil }, set: { _ in })) {
+            CheckInView().environmentObject(model).interactiveDismissDisabled()
+        }
+        .fileImporter(isPresented: $showGPXImporter, allowedContentTypes: [.data]) { result in
+            if case .success(let url) = result { model.importRoute(url) }
+        }
         .alert("Trailbox error", isPresented: Binding(
             get: { model.errorMessage != nil },
             set: { if !$0 { model.dismissError() } })) {
@@ -56,7 +69,7 @@ struct ContentView: View {
                     .tracking(1.8).foregroundStyle(.white.opacity(0.55))
             }
             Spacer()
-            Label("DEMO", systemImage: "play.rectangle.fill")
+            Label(model.isLiveTracking ? "LIVE" : "DEMO", systemImage: model.isLiveTracking ? "location.fill" : "play.rectangle.fill")
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .padding(.horizontal, 12).padding(.vertical, 8)
                 .foregroundStyle(.mint)
@@ -102,6 +115,12 @@ struct ContentView: View {
                 if model.route.count >= 2 {
                     MapPolyline(coordinates: model.route)
                         .stroke(.mint.opacity(0.85), style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                }
+                if let live = model.liveCoordinate, model.isLiveTracking {
+                    Annotation("Live hiker", coordinate: live) {
+                        Image(systemName: "location.fill")
+                            .foregroundStyle(.black).padding(9).background(.yellow, in: Circle())
+                    }
                 }
                 if let signal = model.lastSignalCoordinate {
                     Annotation("Last signal", coordinate: signal) {
@@ -311,6 +330,76 @@ struct ContentView: View {
         }.cardStyle()
     }
 
+    private var safetyQuickAction: some View {
+        HStack(spacing: 12) {
+            Image(systemName: model.isLiveTracking ? "location.north.line.fill" : "shield.lefthalf.filled")
+                .foregroundStyle(model.isLiveTracking ? .mint : .orange)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(model.isLiveTracking ? "LIVE SAFETY ACTIVE" : "LIVE SAFETY OFF")
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                Text(model.isLiveTracking ? "Monitoring GPS, impact, and movement" : "Start tracking before your hike")
+                    .font(.system(size: 10)).foregroundStyle(.white.opacity(0.6))
+            }
+            Spacer()
+            Button(model.isLiveTracking ? "Stop" : "Start") {
+                model.isLiveTracking ? model.stopLive() : model.startLive()
+            }
+            .buttonStyle(.borderedProminent).tint(model.isLiveTracking ? .gray : .green)
+        }
+        .padding(12)
+        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var liveTrailCard: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            Label("LIVE TRAIL SAFETY", systemImage: "figure.hiking")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+            Text("A possible fall, two off-route GPS readings, or 20 minutes without movement opens a check-in. No response in 2 minutes records an SOS with location.")
+                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.68))
+            Text(model.importedRouteName.map { "Route: \($0)" } ?? "Import a GPX trail to enable off-route checks")
+                .font(.system(size: 11)).foregroundStyle(.mint)
+            Button("Import GPX trail") { showGPXImporter = true }
+                .buttonStyle(TrailButtonStyle(prominent: false))
+            Button(model.isLiveTracking ? "Stop live monitoring" : "Start live monitoring") {
+                model.isLiveTracking ? model.stopLive() : model.startLive()
+            }
+            .buttonStyle(TrailButtonStyle(prominent: true))
+            Text(model.liveStatus).font(.system(size: 11)).foregroundStyle(.white.opacity(0.6))
+            HStack {
+                Button("Demo fall") { model.simulateFallCheckIn() }
+                Button("Demo off-route") { model.simulateOffRouteCheckIn() }
+                Button("Demo stillness") { model.simulateStillnessCheckIn() }
+            }
+            .font(.system(size: 10, weight: .bold))
+            .buttonStyle(.bordered)
+            .disabled(!model.isLiveTracking)
+            if let reason = model.checkInReason {
+                Text("CHECK-IN: \(reason.replacingOccurrences(of: "_", with: " ").uppercased())")
+                    .foregroundStyle(.orange).font(.system(size: 11, weight: .bold))
+            }
+        }.cardStyle()
+    }
+
+    private var nearbyIncidentCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("NEARBY HIKER", systemImage: "person.2.wave.2")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+            Text("Pair with the incident code in Agent connections. A received SOS appears here for a passerby to record the injured person's voice.")
+                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.65))
+            if model.nearbyIncidents.isEmpty {
+                Text("No paired incident received").font(.system(size: 11)).foregroundStyle(.orange)
+            }
+            ForEach(model.nearbyIncidents) { incident in
+                Button {
+                    voiceIncident = incident
+                } label: {
+                    Label("Record voice for incident \(incident.tripID.prefix(8))", systemImage: "waveform")
+                        .frame(maxWidth: .infinity)
+                }.buttonStyle(TrailButtonStyle(prominent: false))
+            }
+        }.cardStyle()
+    }
+
     private var emergencyCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -335,7 +424,11 @@ struct ContentView: View {
             }
             .buttonStyle(TrailButtonStyle(prominent: false))
             .accessibilityIdentifier("trailbox.openEmergency")
-            Text("SOS saves immediately. Delivery depends on a connected peer or configured Guardian; check handoff status above.")
+            if model.activeIncidentID == model.tripID {
+                Text("Incident code: \(model.tripID)").font(.system(size: 11, design: .monospaced))
+                    .textSelection(.enabled).foregroundStyle(.orange)
+            }
+            Text("SOS saves immediately. Share the incident code with a nearby helper; only paired phones exchange this incident.")
                 .font(.system(size: 10)).foregroundStyle(.white.opacity(0.48))
         }
         .cardStyle()
@@ -370,7 +463,7 @@ struct ContentView: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     ForEach(event.payload.keys.sorted(), id: \.self) { key in
-                        Text("\(key): \(event.payload[key] ?? "")")
+                        Text("\(key): \(key == "audio_m4a_base64" ? "Voice clip stored (\((event.payload[key] ?? "").count) encoded characters)" : (event.payload[key] ?? ""))")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
                     }

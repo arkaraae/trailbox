@@ -43,6 +43,17 @@ final class TrailboxTests: XCTestCase {
         XCTAssertEqual(try reopened.events(for: "trip"), [record])
     }
 
+    func testSQLiteCollectsPairedIncidentAcrossTrips() throws {
+        let store = try EventStore(path: ":memory:")
+        let own = sample("own")
+        let foreign = TrailEvent(id: "helper", tripID: "incident", deviceID: "passerby",
+                                 type: .injuryVoice, payload: ["transcript": "ankle injury"])
+        try store.append(own)
+        try store.merge([foreign])
+        XCTAssertEqual(Set(try store.allEvents().map(\.id)), ["own", "helper"])
+        XCTAssertEqual(try store.events(for: "trip"), [own])
+    }
+
     func testSQLiteMergeRespectsFirstWriter() throws {
         let store = try EventStore(path: ":memory:")
         let a = sample("same", .position, "original")

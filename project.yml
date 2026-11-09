@@ -26,7 +26,10 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         NSLocalNetworkUsageDescription: Trailbox finds nearby iPhones to relay your trip events.
-        NSLocationWhenInUseUsageDescription: Trailbox records your position in a local emergency record when you request it.
+        NSLocationWhenInUseUsageDescription: Trailbox records trail location to detect route deviation and share your position during an emergency.
+        NSMotionUsageDescription: Trailbox checks for a possible fall during live trail monitoring.
+        NSMicrophoneUsageDescription: A nearby helper can record the injured hiker's voice for the incident log.
+        NSSpeechRecognitionUsageDescription: Trailbox transcribes an emergency voice note on device for the rescuer report.
     settings:
       configs:
         Debug:

@@ -10,12 +10,15 @@
 		2C10FFF27B9CDF5EB323F467 /* TrailSecurity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84AFD02CE9F56DD901A5B6B1 /* TrailSecurity.swift */; };
 		409A7590B16C1742866690EF /* llama.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 16D6F15C0B71C5E1523855B1 /* llama.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5213D9C58ACFBE2E332688F0 /* EdgeRelayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2AC87F18CF5A9B52A292BB /* EdgeRelayService.swift */; };
+		6B130D46517CE95EAD6AF2EA /* CheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA9C18D68190EEA60B5CDC1 /* CheckInView.swift */; };
 		6B9038EC30C113AC5FF033BC /* GPXTrack.swift in Sources */ = {isa = PBXBuildFile; fileRef = A80A41C93F561F208CEF4345 /* GPXTrack.swift */; };
 		7016936694DFFF5A544E3038 /* llama.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 16D6F15C0B71C5E1523855B1 /* llama.xcframework */; };
 		7A999DBD8B8C55D277A7B553 /* EmergencyLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8657EC52A9B163BCFE676AC /* EmergencyLocation.swift */; };
 		8088CE69ACB847CDF18F7945 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E089BB9279DFA645076C586 /* ContentView.swift */; };
 		81CEE534282B0EE71D4400E5 /* LiquidTrailAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA17B4CB9A82CBDECE6ADA5 /* LiquidTrailAgent.swift */; };
+		86A369AD5F533E92BEB9E567 /* LiveTrailMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34CB2E776BED8172B2CE3B89 /* LiveTrailMonitor.swift */; };
 		875C116D92021A7645900487 /* CloudGuardianClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C832AD601FC0DBCE88C12AD1 /* CloudGuardianClient.swift */; };
+		8F475DF1D3D2E718625B63FE /* HelperVoiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CD9FAB20001F38CB152C88D /* HelperVoiceView.swift */; };
 		9659D40D8ACDE8F4D6500A40 /* TrailboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4B5AD53A180131CAF049951 /* TrailboxTests.swift */; };
 		AA54F2D0ABF5450E9B9100D9 /* TrailboxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46E65CC387CD074D4D26631 /* TrailboxApp.swift */; };
 		BDA61802B849F9E63DA6747A /* EmergencyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26156098F200F2BB45A56FA3 /* EmergencyView.swift */; };
@@ -28,6 +31,7 @@
 		D04DD65184D0C08AC9256E1C /* sample-hike.gpx in Resources */ = {isa = PBXBuildFile; fileRef = 4CEA11A0629262B202B378D1 /* sample-hike.gpx */; };
 		E0081998A2F49C5F426A38E8 /* EventStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E34377573F80798431F8659 /* EventStore.swift */; };
 		E843A8DDF8F082AF77A814F2 /* ConnectivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AAB8D8E3185CA3061A98025 /* ConnectivityView.swift */; };
+		F217D2088F76BFC8C57EF671 /* HelperVoiceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C9B3C79E1FD37CE4D041B7 /* HelperVoiceRecorder.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,12 +65,16 @@
 		16D6F15C0B71C5E1523855B1 /* llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = llama.xcframework; path = Vendor/llama.xcframework; sourceTree = "<group>"; };
 		1E089BB9279DFA645076C586 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		26156098F200F2BB45A56FA3 /* EmergencyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyView.swift; sourceTree = "<group>"; };
+		2CD9FAB20001F38CB152C88D /* HelperVoiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperVoiceView.swift; sourceTree = "<group>"; };
+		34CB2E776BED8172B2CE3B89 /* LiveTrailMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTrailMonitor.swift; sourceTree = "<group>"; };
 		3AAB8D8E3185CA3061A98025 /* ConnectivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectivityView.swift; sourceTree = "<group>"; };
 		4CEA11A0629262B202B378D1 /* sample-hike.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "sample-hike.gpx"; sourceTree = "<group>"; };
 		65D5F746BA2C122C81069BF6 /* TripPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanView.swift; sourceTree = "<group>"; };
 		6BA17B4CB9A82CBDECE6ADA5 /* LiquidTrailAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidTrailAgent.swift; sourceTree = "<group>"; };
+		73C9B3C79E1FD37CE4D041B7 /* HelperVoiceRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperVoiceRecorder.swift; sourceTree = "<group>"; };
 		84AFD02CE9F56DD901A5B6B1 /* TrailSecurity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailSecurity.swift; sourceTree = "<group>"; };
 		A80A41C93F561F208CEF4345 /* GPXTrack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXTrack.swift; sourceTree = "<group>"; };
+		ACA9C18D68190EEA60B5CDC1 /* CheckInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckInView.swift; sourceTree = "<group>"; };
 		B46E65CC387CD074D4D26631 /* TrailboxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailboxApp.swift; sourceTree = "<group>"; };
 		BB2AC87F18CF5A9B52A292BB /* EdgeRelayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeRelayService.swift; sourceTree = "<group>"; };
 		C832AD601FC0DBCE88C12AD1 /* CloudGuardianClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudGuardianClient.swift; sourceTree = "<group>"; };
@@ -104,9 +112,11 @@
 		08194E810E13523D11A4A9C9 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				ACA9C18D68190EEA60B5CDC1 /* CheckInView.swift */,
 				3AAB8D8E3185CA3061A98025 /* ConnectivityView.swift */,
 				1E089BB9279DFA645076C586 /* ContentView.swift */,
 				26156098F200F2BB45A56FA3 /* EmergencyView.swift */,
+				2CD9FAB20001F38CB152C88D /* HelperVoiceView.swift */,
 				65D5F746BA2C122C81069BF6 /* TripPlanView.swift */,
 				DE1302740ECA853D6BEEBE94 /* TripStatusCard.swift */,
 			);
@@ -120,7 +130,9 @@
 				BB2AC87F18CF5A9B52A292BB /* EdgeRelayService.swift */,
 				D8657EC52A9B163BCFE676AC /* EmergencyLocation.swift */,
 				0E34377573F80798431F8659 /* EventStore.swift */,
+				73C9B3C79E1FD37CE4D041B7 /* HelperVoiceRecorder.swift */,
 				6BA17B4CB9A82CBDECE6ADA5 /* LiquidTrailAgent.swift */,
+				34CB2E776BED8172B2CE3B89 /* LiveTrailMonitor.swift */,
 				02BCC61CF1A27F3DCEE62617 /* SafetyRules.swift */,
 				D42D9F45B73C0DE3F1C315ED /* TrailboxViewModel.swift */,
 				84AFD02CE9F56DD901A5B6B1 /* TrailSecurity.swift */,
@@ -283,6 +295,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B130D46517CE95EAD6AF2EA /* CheckInView.swift in Sources */,
 				875C116D92021A7645900487 /* CloudGuardianClient.swift in Sources */,
 				E843A8DDF8F082AF77A814F2 /* ConnectivityView.swift in Sources */,
 				8088CE69ACB847CDF18F7945 /* ContentView.swift in Sources */,
@@ -291,7 +304,10 @@
 				BDA61802B849F9E63DA6747A /* EmergencyView.swift in Sources */,
 				E0081998A2F49C5F426A38E8 /* EventStore.swift in Sources */,
 				6B9038EC30C113AC5FF033BC /* GPXTrack.swift in Sources */,
+				F217D2088F76BFC8C57EF671 /* HelperVoiceRecorder.swift in Sources */,
+				8F475DF1D3D2E718625B63FE /* HelperVoiceView.swift in Sources */,
 				81CEE534282B0EE71D4400E5 /* LiquidTrailAgent.swift in Sources */,
+				86A369AD5F533E92BEB9E567 /* LiveTrailMonitor.swift in Sources */,
 				C35C11A12909DAC8F50389C0 /* SafetyRules.swift in Sources */,
 				C36BC155EA353EB64F0556FE /* TrailEvent.swift in Sources */,
 				2C10FFF27B9CDF5EB323F467 /* TrailSecurity.swift in Sources */,

@@ -71,6 +71,21 @@ final class EventStore {
         return result
     }
 
+    func allEvents() throws -> [TrailEvent] {
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(database,
+              "SELECT json FROM events ORDER BY recorded_at, id", -1,
+              &statement, nil) == SQLITE_OK else { throw StoreError.prepareStatement }
+        defer { sqlite3_finalize(statement) }
+        var result: [TrailEvent] = []
+        while sqlite3_step(statement) == SQLITE_ROW {
+            guard let pointer = sqlite3_column_blob(statement, 0) else { continue }
+            let size = Int(sqlite3_column_bytes(statement, 0))
+            result.append(try decoder.decode(TrailEvent.self, from: Data(bytes: pointer, count: size)))
+        }
+        return result
+    }
+
     @discardableResult
     func merge(_ incoming: [TrailEvent]) throws -> Int {
         var inserted = 0

@@ -2,7 +2,7 @@ import Foundation
 import MultipeerConnectivity
 import CryptoKit
 
-/// Nearby phones exchange only append-only events for the same trip code.
+/// An encrypted, incident-code-gated link exchanges only emergency events.
 @MainActor
 final class EdgeRelayService: NSObject, ObservableObject {
     @Published private(set) var status = "Not connected" { didSet { onStatus?(status, peerCount) } }
@@ -45,7 +45,8 @@ final class EdgeRelayService: NSObject, ObservableObject {
     }
 
     func sendSnapshot() {
-        guard !session.connectedPeers.isEmpty, let events = eventsProvider?() else { return }
+        guard !session.connectedPeers.isEmpty, let all = eventsProvider?() else { return }
+        let events = all.filter { $0.tripID == tripID && ($0.type == .sos || $0.type == .injuryVoice) }
         do {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
@@ -100,7 +101,9 @@ extension EdgeRelayService: MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBr
             decoder.dateDecodingStrategy = .iso8601
             guard let envelope = try? decoder.decode(RelayEnvelope.self, from: data),
                   envelope.tripID == tripID else { return }
-            receiveEvents?(envelope.events)
+            receiveEvents?(envelope.events.filter {
+                $0.tripID == tripID && ($0.type == .sos || $0.type == .injuryVoice)
+            })
             status = "Received \(envelope.events.count) events from \(peerID.displayName)"
         }
     }

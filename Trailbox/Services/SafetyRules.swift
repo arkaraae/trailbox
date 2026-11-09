@@ -54,6 +54,16 @@ enum SafetyRules {
         currentPercent - max(0, drainPercentPerHour) * max(0, hoursUntilReturn) < 15
     }
 
+    static func possibleFall(impactG: Double) -> Bool { impactG >= 2.8 }
+
+    static func needsStillnessCheckIn(now: Date, lastMovement: Date) -> Bool {
+        now.timeIntervalSince(lastMovement) >= 20 * 60
+    }
+
+    static func checkInExpired(now: Date, promptedAt: Date) -> Bool {
+        now.timeIntervalSince(promptedAt) >= 2 * 60
+    }
+
     enum StillnessAction: Equatable { case none, prompt, sos }
 
     static func stillness(now: Date, lastMovement: Date, offTrail: Bool,

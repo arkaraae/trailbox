@@ -6,4 +6,6 @@ Set `GUARDIAN_INGEST_TOKEN`, `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, and `FROM_EM
 
 Run tests: `python3 -m unittest discover -s GuardianServer -v` from the repository root.
 
+A passerby's `injury_voice` event queues an updated rescuer packet after the original SOS. The event log retains the short AAC clip; only its on-device reviewed transcript is sent to Claude. If the hiker was offline when the trip plan should have uploaded, Guardian can recover the emergency contact from the SOS payload.
+
 No API keys belong in the iOS app. A user-supplied ingest token may be stored in the iOS Keychain once cloud sync is connected. Do not expose `/status/:trip` without authentication: it reports emergency state.

@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-EVENT_TYPES = {"trip_plan", "position", "pace_update", "vitals", "warning", "sos", "checked_in", "hazard_report", "sync", "agent_note"}
+EVENT_TYPES = {"trip_plan", "position", "pace_update", "vitals", "warning", "sos", "injury_voice", "checked_in", "hazard_report", "sync", "agent_note"}
 
 
 def parse_time(value):
@@ -69,8 +69,17 @@ class GuardianStore:
                 if result.rowcount:
                     inserted += 1
                     if event["type"] == "sos":
+                        payload = event.get("payload") or {}
+                        if payload.get("contact_email") and payload.get("expected_return"):
+                            self.db.execute("INSERT OR IGNORE INTO trips VALUES (?, ?, ?, ?, ?, ?)",
+                                            (event["tripID"], parse_time(payload["expected_return"]),
+                                             payload.get("group", "unknown"), payload.get("contact_name", "unknown"),
+                                             payload["contact_email"], time.time()))
                         self.db.execute("INSERT OR IGNORE INTO escalations(id, trip_id, reason) VALUES (?, ?, 'sos')",
                                         (f"sos:{event['id']}", event["tripID"]))
+                    elif event["type"] == "injury_voice":
+                        self.db.execute("INSERT OR IGNORE INTO escalations(id, trip_id, reason) VALUES (?, ?, 'helper_voice_update')",
+                                        (f"voice:{event['id']}", event["tripID"]))
         return inserted
 
     def queue_overdue(self, now=None):
@@ -98,8 +107,15 @@ class GuardianStore:
                 "SELECT json FROM events WHERE trip_id=? ORDER BY recorded_at DESC, id DESC LIMIT 100", (trip_id,))]
         if trip is None:
             raise ValueError("trip plan not found")
-        # A medical field may only appear in a recorded SOS event. Never derive it from local-only profile data.
-        facts = {"trip": dict(trip), "reason": reason, "events": list(reversed(events))}
+        # Strip the audio blob before sending facts to Claude. Its reviewed transcript is the report input.
+        clean_events = []
+        for event in reversed(events):
+            payload = dict(event.get("payload") or {})
+            if "audio_m4a_base64" in payload:
+                payload.pop("audio_m4a_base64")
+                payload["audio_recorded"] = "true"
+            clean_events.append({**event, "payload": payload})
+        facts = {"trip": dict(trip), "reason": reason, "events": clean_events}
         return facts
 
     def mark_sent(self, escalation_id, packet):
@@ -118,7 +134,7 @@ class GuardianStore:
                 return None
             rows = self.db.execute("SELECT id, reason, status, sent_at, last_error FROM escalations WHERE trip_id=?", (trip_id,)).fetchall()
             count = self.db.execute("SELECT count(*) FROM events WHERE trip_id=?", (trip_id,)).fetchone()[0]
-            last_position = self.db.execute("SELECT json FROM events WHERE trip_id=? AND type='position' ORDER BY recorded_at DESC LIMIT 1", (trip_id,)).fetchone()
+            last_position = self.db.execute("SELECT json FROM events WHERE trip_id=? AND type IN ('position','sos') ORDER BY recorded_at DESC LIMIT 1", (trip_id,)).fetchone()
         return {"trip": dict(trip), "eventCount": count,
                 "lastPosition": json.loads(last_position[0]) if last_position else None,
                 "escalations": [dict(row) for row in rows]}
@@ -127,7 +143,8 @@ class GuardianStore:
 def claude_packet(facts):
     key = os.environ["ANTHROPIC_API_KEY"]
     prompt = ("Write a concise factual rescuer packet from this Trailbox event log. "
-              "Include last known position and timestamp, route, group, injuries, and medical details only "
+              "Include last known position and timestamp, route, group, injuries, and the nearby helper's "
+              "reviewed voice transcript when present. Include medical details only "
               "if present in an SOS event. Mark unknown facts as unknown. Do not invent facts or decide whether "
               "an alert is warranted. The alert was triggered by deterministic code.\n\n"
               + json.dumps(facts, separators=(",", ":")))

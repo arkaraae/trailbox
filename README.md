@@ -1,14 +1,14 @@
 # Trailbox
 
-Native SwiftUI hiking black box. The iPhone records an append-only SQLite event log, replays a bundled GPX route for an indoor demo, and can exchange the log with a nearby iPhone. A configured Mac trailhead relay or cloud Guardian accepts the same event batches. Safety decisions are deterministic code; Liquid AI is used **only after an SOS** to summarize recorded emergency facts on device.
+Native SwiftUI hiking black box. The iPhone records an append-only SQLite event log, monitors live GPS and possible impacts while foregrounded, and replays a bundled GPX route for an indoor demo. A safety signal opens a two-minute check-in; a paired nearby passerby can record the injured person's voice for the incident. A configured Mac trailhead relay or cloud Guardian accepts the same event batches. Safety decisions are deterministic code; Liquid AI is used **only after an SOS** to summarize recorded emergency facts on device.
 
 The dashboard adapts the supplied dark route-card reference with a green trail trace, blue progress marker, large time and distance, MapKit map, and explicit on-device / edge / cloud status. This is an Xcode project. There is no Expo, React Native, or JavaScript app runtime.
 
 ## Current verification
 
 - iPhone SDK Debug build succeeds with `CODE_SIGNING_ALLOWED=NO`.
-- 12 iOS simulator tests pass: event merge, SQLite persistence, GPX, and six safety-rule tests.
-- 3 Guardian tests and 1 trailhead relay test pass.
+- 14 iOS simulator tests pass: event merge, cross-trip SQLite persistence, GPX, and safety rules.
+- 5 Guardian tests and 1 trailhead relay test pass.
 - No physical iPhone was connected to the build Mac, so signing, nearby two-phone sync, and Liquid inference on a phone remain unverified. Claude and Resend require your backend credentials and were exercised only with test doubles.
 
 ## Open in Xcode
@@ -18,14 +18,16 @@ The dashboard adapts the supplied dark route-card reference with a green trail t
 3. Connect iPhone A, trust the Mac, enable Developer Mode on the phone, select it as the Xcode run destination, and press **⌘R**. Repeat for iPhone B.
 4. Allow Local Network and Location permission when requested. The bundled GPX replay works indoors; standard MapKit tiles can need internet.
 
-## Two-iPhone demo
+## Two-iPhone incident demo
 
-1. On iPhone A, tap **Plan hike**. Enter a group, emergency contact, and expected return. Medical text is stored in this phone's Keychain and enters the event log only in a recorded SOS.
-2. On iPhone B, open **Agent connections**. Copy the trip code shown on A into **Join another trip code** on B. Tap **Enable relay** on both phones while they share Wi-Fi (a phone hotspot or local router works). The EDGE badge turns on when a peer connects. The event log on B should gain A's `trip_plan` event.
-3. On A, tap **Start Hike**, choose 60×, then toggle **Fake barometer drop** and **Fake low battery**. The black box should contain one `warning` per deterministic demo rule. Toggle **Force simulated offline** to queue cloud uploads locally; nearby relay remains separate from that demo switch.
-4. On A, open **Record emergency**, enter what happened and injuries, refresh GPS or enter coordinates, and tap **Record SOS**. The SOS event is written before any model inference. If the 696 MB Liquid model was prepared while online, it creates a factual `agent_note` after the SOS. On B, inspect the event log for A's SOS ID. Medical details travel only within that SOS event.
-5. Configure **Cloud Guardian** on A or B with a deployed HTTPS Guardian URL and ingest token. The configured phone uploads its merged event log, including SOS events received from another phone. Verify the CLOUD badge and pending count. The Guardian's authenticated `/status/<trip-id>` reports escalation state. The web root `/` contains a token-gated status view and last-position map.
-6. To test the laptop relay, run the trailhead server below, then enter `http://<Mac-hostname>.local:8081` and `TRAILHEAD_TOKEN` in the iPhone's Guardian connection form. The laptop stores trip/event batches and forwards them if its `GUARDIAN_URL` and `GUARDIAN_INGEST_TOKEN` are set. This manual endpoint choice is the current Mac handoff; Bonjour advertises the server but the phone does not auto-select it.
+1. Install the same Xcode app on both iPhones. Keep both on the same Wi-Fi with Local Network permission enabled. On iPhone A (the hiker), save a trip plan with an emergency contact. Import a GPX trail for live off-route detection; the bundled route remains available for indoor replay.
+2. On A, tap **Start live monitoring**. In a room, tap **Demo fall**, **Demo off-route**, or **Demo stillness**. The same deterministic rule path opens **Are you okay?**. Tap **I'm okay** to append a `checked_in` event, or **Send SOS now** to append an SOS with the current GPS location. Without a response, the foreground monitor records SOS after two minutes.
+3. After SOS, A shows an incident code. On B (the passerby), open **Agent connections**, enter that code under **Nearby incident handoff**, and tap **Pair with incident**. The encrypted nearby link transfers only this incident's SOS and helper voice events. No trip plan or routine location history is broadcast to strangers.
+4. On B, open **Nearby hiker → Record voice**. Ask the injured person what happened and what hurts, record up to 30 seconds, review the on-device transcript or type a summary, then save. The AAC clip and reviewed text become an `injury_voice` event in the append-only incident log; the paired link returns it to A.
+5. Configure a deployed Guardian URL and ingest token on A or B. Either phone can upload the SOS and helper voice event. Guardian sends an initial SOS packet and a supplemental report when the voice event arrives. The voice recording remains in the event log; only the reviewed transcript is sent to Claude. Check `/status/<incident-code>` with the bearer token.
+6. For the laptop trailhead hop, run the Mac relay below and configure its local endpoint on a phone. It stores and forwards idempotent event batches when internet returns.
+
+The Liquid model is prepared on the hiker's phone while online and is invoked only after SOS to create a factual local emergency note. It never decides whether to check in or escalate.
 
 ## Guardian cloud
 
@@ -69,6 +71,6 @@ Use an installed simulator name from `xcodebuild -showdestinations`. To regenera
 
 ## Boundaries
 
-This is a hackathon prototype, not a certified emergency service. The current route recorder is GPX replay; live GPS is used for emergency intake, and background GPS monitoring, automatic stillness SOS, cached weather, local notifications, widgets, Live Activities, automatic Mac discovery, and hands-free cloud recovery are not implemented. iOS may suspend foreground-only sync. Physical-device and real provider end-to-end testing are required before relying on it outdoors.
+This is a hackathon prototype, not a certified emergency service. Live GPS, impact sampling, check-in timing, and nearby sync currently run only while the app is active in the foreground; iOS may suspend them when locked or backgrounded. Fall detection is a simple impact threshold and can produce false prompts. Off-route monitoring needs a GPX file for the actual trail. On-device speech recognition depends on device support and permission; if unavailable, the helper must review and type a transcript after recording. No physical iPhone was connected during development, so the two-phone handoff and phone inference still need device verification. Provider credentials and a deployed Guardian are required to test real email delivery.
 
 The Liquid model downloads from a pinned LiquidAI GGUF revision on user request, verifies size and SHA-256, and runs through the included native llama.cpp XCFramework. The model file is not committed. Framework provenance and license are in `Vendor/README.md` and `Vendor/llama.LICENSE`.

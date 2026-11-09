@@ -11,6 +11,7 @@ struct TripStatusCard: View {
     }
 
     private var distanceMiles: Double {
+        if model.isLiveTracking { return model.liveDistanceMeters / 1_609.344 }
         guard model.pointIndex > 0 else { return 0 }
         return zip(model.points.prefix(model.pointIndex), model.points.dropFirst().prefix(model.pointIndex))
             .reduce(0) { total, pair in
@@ -20,7 +21,7 @@ struct TripStatusCard: View {
     }
 
     private var elapsed: String {
-        let seconds = Int(model.elapsedSeconds)
+        let seconds = Int(model.isLiveTracking ? model.liveElapsedSeconds : model.elapsedSeconds)
         return String(format: "%02d:%02d:%02d", seconds / 3_600, (seconds / 60) % 60, seconds % 60)
     }
 
@@ -31,7 +32,7 @@ struct TripStatusCard: View {
                     .font(.system(size: 22, weight: .light))
                     .frame(width: 54, height: 54)
                     .background(.white.opacity(0.1), in: Circle())
-                Text("Sample Hill Loop")
+                Text(model.importedRouteName.map { ($0 as NSString).deletingPathExtension } ?? "Sample Hill Loop")
                     .font(.system(size: 24, weight: .medium, design: .rounded))
                     .foregroundStyle(Color(red: 0.58, green: 0.92, blue: 0.43))
                     .lineLimit(1)

@@ -50,6 +50,20 @@ final class SafetyRulesTests: XCTestCase {
                                               offTrail: true, promptAt: nil, responded: true), .none)
     }
 
+    func testLiveCheckInThresholdsAreDeterministic() {
+        let now = Date(timeIntervalSince1970: 5_000)
+        XCTAssertFalse(SafetyRules.possibleFall(impactG: 2.7))
+        XCTAssertTrue(SafetyRules.possibleFall(impactG: 2.8))
+        XCTAssertFalse(SafetyRules.needsStillnessCheckIn(now: now,
+            lastMovement: now.addingTimeInterval(-1_199)))
+        XCTAssertTrue(SafetyRules.needsStillnessCheckIn(now: now,
+            lastMovement: now.addingTimeInterval(-1_200)))
+        XCTAssertFalse(SafetyRules.checkInExpired(now: now,
+            promptedAt: now.addingTimeInterval(-119)))
+        XCTAssertTrue(SafetyRules.checkInExpired(now: now,
+            promptedAt: now.addingTimeInterval(-120)))
+    }
+
     func testOverdueRequiresMissingCheckIn() {
         let returnTime = Date(timeIntervalSince1970: 10_000)
         XCTAssertFalse(SafetyRules.overdue(now: returnTime.addingTimeInterval(1_799), expectedReturn: returnTime, checkedIn: false))

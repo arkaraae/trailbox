@@ -30,6 +30,12 @@
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Trailbox finds nearby iPhones to relay your trip events.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Trailbox records your position in a local emergency record when you request it.</string>
+	<string>Trailbox records trail location to detect route deviation and share your position during an emergency.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>A nearby helper can record the injured hiker's voice for the incident log.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Trailbox checks for a possible fall during live trail monitoring.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Trailbox transcribes an emergency voice note on device for the rescuer report.</string>
 </dict>
 </plist>

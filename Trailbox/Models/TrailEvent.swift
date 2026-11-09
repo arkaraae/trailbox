@@ -7,6 +7,7 @@ enum TrailEventType: String, Codable, CaseIterable {
     case vitals
     case warning
     case sos
+    case injuryVoice = "injury_voice"
     case checkedIn = "checked_in"
     case hazardReport = "hazard_report"
     case sync

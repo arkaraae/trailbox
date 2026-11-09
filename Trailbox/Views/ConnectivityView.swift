@@ -11,14 +11,17 @@ struct ConnectivityView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Nearby iPhone relay") {
-                    Text("Share this trip code with the second iPhone. Both phones must use the same code and enable nearby relay.")
+                Section("Nearby incident handoff") {
+                    Text("After SOS, the injured phone shows an incident code. Enter that code on the helper's phone to pair. Only this incident's SOS and voice events cross the encrypted link.")
                         .font(.caption)
-                    Text(model.tripID).font(.system(.footnote, design: .monospaced)).textSelection(.enabled)
-                    ShareLink(item: model.tripID) { Label("Share trip code", systemImage: "square.and.arrow.up") }
-                    TextField("Join another trip code", text: $joinCode)
+                    if model.activeIncidentID == model.tripID {
+                        Text("Your incident code: \(model.tripID)")
+                            .font(.system(.footnote, design: .monospaced)).textSelection(.enabled)
+                        ShareLink(item: model.tripID) { Label("Share incident code", systemImage: "square.and.arrow.up") }
+                    }
+                    TextField("Injured hiker's incident code", text: $joinCode)
                         .textInputAutocapitalization(.characters)
-                    Button("Join trip") { model.joinTrip(code: joinCode) }
+                    Button("Pair with incident") { model.helpIncident(code: joinCode) }
                         .disabled(joinCode.isEmpty)
                     if let relay = model.relay { RelayStatusView(relay: relay) }
                 }

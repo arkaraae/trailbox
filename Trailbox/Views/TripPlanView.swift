@@ -16,7 +16,7 @@ struct TripPlanView: View {
                 Section("Trip") {
                     TextField("Group name", text: $groupName)
                     DatePicker("Expected return", selection: $expectedReturn, in: Date()...)
-                    Text("Route: Sample Hill Loop (bundled GPX)").font(.caption)
+                    Text("Route: \(model.importedRouteName ?? "Sample Hill Loop (bundled GPX)")").font(.caption)
                 }
                 Section("Emergency contact") {
                     TextField("Name", text: $contactName)

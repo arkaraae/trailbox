@@ -78,7 +78,7 @@ struct EmergencyView: View {
                                     coordinate: coordinate, locationSource: source) else { return }
         saved = true
         if agent.isReady {
-            agent.summarizeEmergency(events: model.events) { summary in
+            agent.summarizeEmergency(events: model.events.filter { $0.tripID == model.tripID }) { summary in
                 model.recordAgentNote(question: "Emergency responder summary", answer: summary)
             }
         }

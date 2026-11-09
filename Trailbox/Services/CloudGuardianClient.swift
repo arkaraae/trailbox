@@ -25,6 +25,15 @@ enum CloudGuardianClient {
                                       "contactName": contactName, "contactEmail": contactEmail,
                                       "expectedReturn": formatter.string(from: expectedReturn)]
         try await post(plan, to: base.appending(path: "trip"), token: token)
+        try await uploadEvents(events)
+    }
+
+    static func uploadEvents(_ events: [TrailEvent]) async throws {
+        guard let rawURL = UserDefaults.standard.string(forKey: "trailbox.guardianURL"),
+              let base = URL(string: rawURL), ["https", "http"].contains(base.scheme),
+              let token = TrailSecurity.read("guardianToken"), !token.isEmpty else {
+            throw UploadError.notConfigured
+        }
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         let body = try encoder.encode(EventBatch(events: events))
